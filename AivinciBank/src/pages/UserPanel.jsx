@@ -28,27 +28,13 @@ import HistorySection from "../components/HistorySection";
 import { useAuthState, useAuth } from "../store/hooks/useAuthHook";
 import { useHistory } from "../store/hooks/useHistoryHook";
 
-const data = [
-  { name: "January", income: 1200, expense: 800 },
-  { name: "February", income: 1500, expense: 900 },
-  { name: "March", income: 1700, expense: 1100 },
-  { name: "April", income: 1300, expense: 950 },
-  { name: "May", income: 1600, expense: 1000 },
-  { name: "June", income: 1400, expense: 850 },
-  { name: "July", income: 1800, expense: 1200 },
-  { name: "August", income: 1600, expense: 1100 },
-  { name: "September", income: 1700, expense: 1000 },
-  { name: "October", income: 1900, expense: 1300 },
-  { name: "November", income: 2000, expense: 1400 },
-  { name: "December", income: 2100, expense: 1500 },
-];
-
 const UserPanel = () => {
   const [selectedSection, setSelectedSection] = useState("info");
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [loanHistory, setLoanHistory] = useState([]);
   const [transferHistory, setTransferHistory] = useState([]);
   const [incomeHistory, setIncomeHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const authState = useAuthState();
 
@@ -69,16 +55,27 @@ const UserPanel = () => {
 
   useEffect(() => {
     const fetchAccounts = async () => {
+      setIsLoading(true);
       try {
         const result = await GetLoanHistory();
         setLoanHistory(result.payload || []);
 
         const transferResult = await GetTransferHistory();
         const incomeResult = await GetIncomeHistory();
-        setTransferHistory(transferResult.payload || []);
-        setIncomeHistory(incomeResult.payload || []);
+        setTransferHistory(
+          transferResult.type == "history/transfer/fulfilled"
+            ? transferResult.payload
+            : []
+        );
+        setIncomeHistory(
+          incomeResult.type == "history/income/fulfilled"
+            ? incomeResult.payload
+            : []
+        );
       } catch (err) {
         console.error("Xəta baş verdi:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -212,42 +209,69 @@ const UserPanel = () => {
                 icon={<ChartLineUp className="h-5 w-5" />}
               >
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={buildChartData()}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke={darkMode ? "#333" : "#eee"}
-                      />
-                      <XAxis
-                        dataKey="name"
-                        stroke={darkMode ? "#ccc" : "#333"}
-                      />
-                      <YAxis stroke={darkMode ? "#ccc" : "#333"} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: darkMode ? "#1e1e2f" : "#fff",
-                          border: "1px solid #ccc",
-                        }}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="income"
-                        name="Gəlir"
-                        stroke="#65a30d"
-                        strokeWidth={3}
-                        activeDot={{ r: 6 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="expense"
-                        name="Xərc"
-                        stroke="#f97316"
-                        strokeWidth={3}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                        <p className="text-muted text-sm">
+                          Məlumatlar yüklənir...
+                        </p>
+                      </div>
+                    </div>
+                  ) : buildChartData().every(
+                      (item) => item.income === 0 && item.expense === 0
+                    ) ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <ChartLineUp className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <p className="text-muted text-lg font-medium">
+                          Məlumat yoxdur
+                        </p>
+                        <p className="text-muted text-sm">
+                          Hələ heç bir əməliyyat edilməyib
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={buildChartData()}>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke={darkMode ? "#333" : "#eee"}
+                        />
+                        <XAxis
+                          dataKey="name"
+                          stroke={darkMode ? "#ccc" : "#333"}
+                        />
+                        <YAxis stroke={darkMode ? "#ccc" : "#333"} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: darkMode ? "#1e1e2f" : "#fff",
+                            border: "1px solid #ccc",
+                          }}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="income"
+                          name="Gəlir"
+                          stroke="#65a30d"
+                          strokeWidth={3}
+                          activeDot={{ r: 6 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="expense"
+                          name="Xərc"
+                          stroke="#f97316"
+                          strokeWidth={3}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </Card>
 
@@ -256,35 +280,68 @@ const UserPanel = () => {
                 icon={<ChartLineUp className="h-5 w-5" />}
               >
                 <div className="h-[300px] flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name} ${(percent * 100).toFixed(0)}%`
-                        }
-                      >
-                        {data.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={`hsl(${(index * 110) % 360}, 60%, 60%)`}
+                  {isLoading ? (
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
+                      <p className="text-muted text-sm">
+                        Kredit məlumatları yüklənir...
+                      </p>
+                    </div>
+                  ) : pieData.length === 0 ? (
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        <svg
+                          className="h-8 w-8 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
                           />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: darkMode ? "#1e1e2f" : "#fff",
-                          border: "1px solid #ccc",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                        </svg>
+                      </div>
+                      <p className="text-muted text-lg font-medium">
+                        Kredit yoxdur
+                      </p>
+                      <p className="text-muted text-sm">
+                        Hələ heç bir kredit götürülməyib
+                      </p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) =>
+                            `${name} ${(percent * 100).toFixed(0)}%`
+                          }
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={`hsl(${(index * 110) % 360}, 60%, 60%)`}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: darkMode ? "#1e1e2f" : "#fff",
+                            border: "1px solid #ccc",
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </Card>
 
@@ -293,39 +350,64 @@ const UserPanel = () => {
                 icon={<ArrowRightLeft className="h-5 w-5" />}
                 className="lg:col-span-2"
               >
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-surface-hover">
-                        <th className="text-left py-3 px-4">Tarix</th>
-                        <th className="text-left py-3 px-4">Iban</th>
-                        <th className="text-left py-3 px-4">Növ</th>
-                        <th className="text-left py-3 px-4">Məbləğ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {transactions
-                        .sort((a, b) => new Date(b.date) - new Date(a.date))
-                        .map((tx, idx) => (
-                          <tr
-                            key={idx}
-                            className="border-b border-surface-hover"
-                          >
-                            <td className="py-3 px-4">{tx.date}</td>
-                            <td className="py-3 px-4">{tx.iban}</td>
-                            <td className="py-3 px-4">{tx.description}</td>
-                            <td
-                              className={`py-3 px-4 ${
-                                tx.isIncome ? "text-green-500" : "text-red-500"
-                              }`}
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-500"></div>
+                      <p className="text-muted text-sm">
+                        Əməliyyat tarixçəsi yüklənir...
+                      </p>
+                    </div>
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <ArrowRightLeft className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <p className="text-muted text-lg font-medium">
+                      Əməliyyat yoxdur
+                    </p>
+                    <p className="text-muted text-sm">
+                      Hələ heç bir əməliyyat edilməyib
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-surface-hover">
+                          <th className="text-left py-3 px-4">Tarix</th>
+                          <th className="text-left py-3 px-4">Iban</th>
+                          <th className="text-left py-3 px-4">Növ</th>
+                          <th className="text-left py-3 px-4">Məbləğ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactions
+                          .sort((a, b) => new Date(b.date) - new Date(a.date))
+                          .map((tx, idx) => (
+                            <tr
+                              key={idx}
+                              className="border-b border-surface-hover"
                             >
-                              {tx.amount} {tx.currency}
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
+                              <td className="py-3 px-4">{tx.date}</td>
+                              <td className="py-3 px-4">{tx.iban}</td>
+                              <td className="py-3 px-4">{tx.description}</td>
+                              <td
+                                className={`py-3 px-4 ${
+                                  tx.isIncome
+                                    ? "text-green-500"
+                                    : "text-red-500"
+                                }`}
+                              >
+                                {tx.amount} {tx.currency}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </Card>
             </div>
           </>

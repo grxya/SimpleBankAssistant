@@ -324,7 +324,7 @@ const Register = () => {
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <User className="h-5 w-5 text-muted" />
+                        <User className="h-5 w-5 text-muted dark:text-black" />
                       </div>
                       <input
                         id="fullname"
@@ -332,7 +332,7 @@ const Register = () => {
                         type="text"
                         value={formData.fullname}
                         onChange={handleChange}
-                        className={`w-full pl-12 py-3 px-4 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-primary transition-colors ${
+                        className={`w-full pl-12 py-3 px-4 rounded-md  dark:text-black bg-surface-hover border border-surface-hover focus:outline-none focus:border-primary transition-colors ${
                           errors.fullname
                             ? "border-red-500 focus:border-red-500"
                             : ""
@@ -357,7 +357,7 @@ const Register = () => {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-muted" />
+                      <Mail className="h-5 w-5 text-muted dark:text-black" />
                     </div>
                     <input
                       id="email"
@@ -365,7 +365,7 @@ const Register = () => {
                       type="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`w-full pl-12 py-3 px-4 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-primary transition-colors ${
+                      className={`w-full pl-12 py-3 px-4 rounded-md  dark:text-black bg-surface-hover border border-surface-hover focus:outline-none focus:border-primary transition-colors ${
                         errors.email
                           ? "border-red-500 focus:border-red-500"
                           : ""
@@ -391,7 +391,7 @@ const Register = () => {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-muted" />
+                      <Lock className="h-5 w-5 text-muted dark:text-black" />
                     </div>
                     <input
                       id="password"
@@ -399,7 +399,7 @@ const Register = () => {
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full pl-12 pr-12 py-3 px-4 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-primary transition-colors ${
+                      className={`w-full pl-12 pr-12 py-3 px-4 rounded-md  dark:text-black bg-surface-hover border border-surface-hover focus:outline-none focus:border-primary transition-colors ${
                         errors.password
                           ? "border-red-500 focus:border-red-500"
                           : ""
@@ -412,9 +412,9 @@ const Register = () => {
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-5 w-5 text-muted" />
+                        <EyeOff className="h-5 w-5 text-muted dark:text-black" />
                       ) : (
-                        <Eye className="h-5 w-5 text-muted" />
+                        <Eye className="h-5 w-5 text-muted dark:text-black" />
                       )}
                     </button>
                   </div>
@@ -452,7 +452,7 @@ const Register = () => {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-muted" />
+                      <Lock className="h-5 w-5 text-muted dark:text-black" />
                     </div>
                     <input
                       id="confirmPassword"
@@ -460,7 +460,7 @@ const Register = () => {
                       type={showConfirmPassword ? "text" : "password"}
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className={`w-full pl-12 pr-12 py-3 px-4 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-primary transition-colors ${
+                      className={`w-full pl-12 pr-12 py-3 px-4 rounded-md  dark:text-black bg-surface-hover border border-surface-hover focus:outline-none focus:border-primary transition-colors ${
                         errors.confirmPassword
                           ? "border-red-500 focus:border-red-500"
                           : ""
@@ -475,9 +475,9 @@ const Register = () => {
                       }
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="h-5 w-5 text-muted" />
+                        <EyeOff className="h-5 w-5 text-muted dark:text-black" />
                       ) : (
-                        <Eye className="h-5 w-5 text-muted" />
+                        <Eye className="h-5 w-5 text-muted dark:text-black" />
                       )}
                     </button>
                   </div>
@@ -581,7 +581,7 @@ const Register = () => {
                       setOtpCode(value);
                       setOtpError("");
                     }}
-                    className={`w-full py-3 px-4 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-primary transition-colors text-center text-2xl tracking-widest ${
+                    className={`w-full py-3 px-4 rounded-md bg-surface-hover dark:text-black border border-surface-hover focus:outline-none focus:border-primary transition-colors text-center text-2xl tracking-widest ${
                       otpError ? "border-red-500 focus:border-red-500" : ""
                     }`}
                     placeholder="000000"

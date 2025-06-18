@@ -14,6 +14,7 @@ const ChatBot = () => {
   const [showLanguageSelector, setShowLanguageSelector] = useState(true);
   const [messages, setMessages] = useState([]);
   const [userInput, setuserInput] = useState("");
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const messagesEndRef = useRef(null);
   const chatRef = useRef(null);
 
@@ -63,6 +64,18 @@ const ChatBot = () => {
     ]);
   };
 
+  const changeLanguage = (lang) => {
+    setSelectedLanguage(lang);
+    setShowLanguageDropdown(false);
+    // Add a system message about language change
+    const languageChangeMessage = {
+      id: messages.length + 1,
+      text: languages[lang].welcome,
+      isBot: true,
+    };
+    setMessages((prev) => [...prev, languageChangeMessage]);
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -80,13 +93,21 @@ const ChatBot = () => {
       ) {
         setIsOpen(false);
       }
+      // Close language dropdown when clicking outside
+      if (
+        showLanguageDropdown &&
+        chatRef.current &&
+        !chatRef.current.contains(event.target)
+      ) {
+        setShowLanguageDropdown(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, showLanguageDropdown]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -225,7 +246,7 @@ const ChatBot = () => {
           strokeLinejoin="round"
         />
         <path
-          d="M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"
+          d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"
           stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
@@ -240,13 +261,29 @@ const ChatBot = () => {
         />
       </svg>
     ),
+    language: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+        <path
+          d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+      </svg>
+    ),
   };
 
   return (
     <>
       {/* Modern AI Chat Button */}
       <button
-        className={`fixed right-6 bottom-6 z-40 w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-500 cursor-pointer group overflow-hidden ${
+        className={`fixed right-6 bottom-6 z-50 w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 cursor-pointer group overflow-hidden ${
           isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"
         }`}
         onClick={toggleChat}
@@ -265,7 +302,7 @@ const ChatBot = () => {
         </div>
 
         {/* Animated background pattern */}
-        <div className="absolute inset-0 rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 rounded-full overflow-hidden">
           <div
             className="absolute w-full h-full opacity-20"
             style={{
@@ -300,7 +337,7 @@ const ChatBot = () => {
       >
         {/* Header */}
         <div
-          className="p-5 flex justify-between items-center relative overflow-hidden rounded-t-3xl"
+          className="p-5 flex justify-between items-center relative overflow rounded-t-3xl"
           style={{
             background: darkMode
               ? "linear-gradient(135deg, #f59e0b 0%, #14b8a6 50%, #84cc16 100%)"
@@ -321,7 +358,7 @@ const ChatBot = () => {
             ></div>
           </div>
 
-          <div className="flex items-center space-x-3 relative z-10">
+          <div className="flex items-center space-x-3 relative z-50">
             <div>
               <h3 className="font-bold text-white text-lg">Aivinci AI</h3>
               <div className="flex items-center space-x-2">
@@ -333,7 +370,56 @@ const ChatBot = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 relative z-10">
+          <div className="flex items-center space-x-2 relative z-50">
+            {selectedLanguage && (
+              <div className="relative z-50">
+                <button
+                  onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                  className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all duration-300 text-white border border-white/30 hover:scale-110"
+                  title="Change Language"
+                >
+                  {icons.language}
+                </button>
+
+                {showLanguageDropdown && (
+                  <div
+                    className="absolute top-10 right-0 rounded-xl backdrop-blur-sm z-50 overflow-hidden transform transition-all duration-200"
+                    style={{
+                      background: darkMode
+                        ? "rgba(20, 20, 20, 0.95)"
+                        : "rgba(255, 255, 255, 0.95)",
+                      border: darkMode
+                        ? "1px solid rgba(255, 255, 255, 0.1)"
+                        : "1px solid rgba(0, 0, 0, 0.1)",
+                      boxShadow: darkMode
+                        ? "0 8px 25px rgba(0, 0, 0, 0.4)"
+                        : "0 8px 25px rgba(0, 0, 0, 0.15)",
+                    }}
+                  >
+                    <div className="p-1 flex space-x-1">
+                      {Object.entries(languages).map(([code, lang]) => (
+                        <button
+                          key={code}
+                          onClick={() => changeLanguage(code)}
+                          className="w-8 h-8 rounded-full transition-all duration-200 hover:scale-110 flex items-center justify-center hover:bg-white/10"
+                          style={{
+                            background:
+                              selectedLanguage === code
+                                ? darkMode
+                                  ? "linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(20, 184, 166, 0.2) 50%, rgba(132, 204, 22, 0.2) 100%)"
+                                  : "linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(6, 182, 212, 0.2) 50%, rgba(101, 163, 13, 0.2) 100%)"
+                                : "transparent",
+                          }}
+                          title={lang.name}
+                        >
+                          <span className="text-lg">{lang.flag}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {selectedLanguage && (
               <button
                 onClick={resetChat}
@@ -412,7 +498,7 @@ const ChatBot = () => {
         {!showLanguageSelector && (
           <>
             <div
-              className="h-80 overflow-y-auto p-5 space-y-4"
+              className="h-80 overflow-y-auto p-5 flex flex-col space-y-4"
               style={{
                 background: darkMode
                   ? "rgba(11, 11, 11, 0.3)"
@@ -422,32 +508,69 @@ const ChatBot = () => {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`max-w-[85%] p-4 rounded-2xl backdrop-blur-sm ${
-                    message.isBot
-                      ? `self-start ${
-                          darkMode
-                            ? "bg-[rgb(36,36,36)]/50 text-white"
-                            : "bg-white/70 text-[rgb(36,36,36)]"
-                        } border ${
-                          darkMode
-                            ? "border-[rgb(68,68,68)]/50"
-                            : "border-gray-200/50"
-                        }`
-                      : "self-end text-white"
+                  className={`flex ${
+                    message.isBot ? "justify-start" : "justify-end"
                   }`}
-                  style={{
-                    ...(message.isBot
-                      ? {}
-                      : {
-                          background:
-                            "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
-                          boxShadow: "0 4px 15px rgba(245, 158, 11, 0.3)",
-                        }),
-                    animation: "slideIn 0.4s ease-out forwards",
-                    alignSelf: message.isBot ? "flex-start" : "flex-end",
-                  }}
                 >
-                  {message.isBot && (
+                  <div
+                    className={`max-w-[85%] p-4 rounded-2xl backdrop-blur-sm ${
+                      message.isBot
+                        ? `${
+                            darkMode
+                              ? "bg-[rgb(36,36,36)]/50 text-white"
+                              : "bg-white/70 text-[rgb(36,36,36)]"
+                          } border ${
+                            darkMode
+                              ? "border-[rgb(68,68,68)]/50"
+                              : "border-gray-200/50"
+                          }`
+                        : "text-white"
+                    }`}
+                    style={{
+                      ...(message.isBot
+                        ? {}
+                        : {
+                            background:
+                              "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
+                            boxShadow: "0 4px 15px rgba(245, 158, 11, 0.3)",
+                          }),
+                      animation: "slideIn 0.4s ease-out forwards",
+                    }}
+                  >
+                    {message.isBot && (
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div
+                          className="w-4 h-4 rounded-full flex items-center justify-center"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
+                          }}
+                        >
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+                        <span className="text-xs font-medium opacity-70">
+                          AI Assistant
+                        </span>
+                      </div>
+                    )}
+                    <p className="text-sm leading-relaxed whitespace-pre-line">
+                      {message.text.replace(/\\n/g, "\n")}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div
+                    className={`max-w-[85%] p-4 rounded-2xl ${
+                      darkMode ? "bg-[rgb(36,36,36)]/50" : "bg-white/70"
+                    } border ${
+                      darkMode
+                        ? "border-[rgb(68,68,68)]/50"
+                        : "border-gray-200/50"
+                    }`}
+                  >
                     <div className="flex items-center space-x-2 mb-2">
                       <div
                         className="w-4 h-4 rounded-full flex items-center justify-center"
@@ -462,48 +585,20 @@ const ChatBot = () => {
                         AI Assistant
                       </span>
                     </div>
-                  )}
-                  <p className="text-sm leading-relaxed">{message.text}</p>
-                </div>
-              ))}
-
-              {isTyping && (
-                <div
-                  className={`max-w-[85%] p-4 rounded-2xl self-start ${
-                    darkMode ? "bg-[rgb(36,36,36)]/50" : "bg-white/70"
-                  } border ${
-                    darkMode
-                      ? "border-[rgb(68,68,68)]/50"
-                      : "border-gray-200/50"
-                  }`}
-                >
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
-                      }}
-                    >
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    <div className="flex space-x-1">
+                      <div
+                        className="w-2 h-2 rounded-full bg-amber-500 animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 rounded-full bg-teal-500 animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      ></div>
+                      <div
+                        className="w-2 h-2 rounded-full bg-lime-500 animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      ></div>
                     </div>
-                    <span className="text-xs font-medium opacity-70">
-                      AI Assistant
-                    </span>
-                  </div>
-                  <div className="flex space-x-1">
-                    <div
-                      className="w-2 h-2 rounded-full bg-amber-500 animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 rounded-full bg-teal-500 animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 rounded-full bg-lime-500 animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    ></div>
                   </div>
                 </div>
               )}

@@ -20,11 +20,7 @@ const HistorySection = () => {
   const [loanHistory, setLoanHistory] = useState([]);
   const [activeTab, setActiveTab] = useState("transfers");
 
-  const {
-    GetTransferHistory,
-    GetIncomeHistory,
-    GetLoanHistory,
-  } = useHistory();
+  const { GetTransferHistory, GetIncomeHistory, GetLoanHistory } = useHistory();
 
   useEffect(() => {
     handleGetTransferHistory();
@@ -40,7 +36,9 @@ const HistorySection = () => {
   const handleGetTransferHistory = async () => {
     try {
       const result = await GetTransferHistory();
-      setTransferHistory(result.payload || []);
+      setTransferHistory(
+        result.type == "history/transfer/fulfilled" ? result.payload : []
+      );
     } catch (error) {
       console.error("Transfer history fetch error:", error);
     }
@@ -49,8 +47,9 @@ const HistorySection = () => {
   const handleGetAccountHistory = async () => {
     try {
       const result = await GetIncomeHistory();
-      console.log(result);
-      setAccountHistory(result.payload || []);
+      setAccountHistory(
+        result.type == "history/income/fulfilled" ? result.payload : []
+      );
     } catch (error) {
       console.error("Account history fetch error:", error);
     }
@@ -77,7 +76,9 @@ const HistorySection = () => {
   const handleGetLoanHistory = async () => {
     try {
       const result = await GetLoanHistory();
-      setLoanHistory(result.payload || []);
+      setLoanHistory(
+        result.type == "history/loan/fulfilled" ? result.payload : []
+      );
     } catch (error) {
       console.error("Loan history fetch error:", error);
     }
@@ -91,7 +92,7 @@ const HistorySection = () => {
     },
     {
       id: "accounts",
-      label: "Hesab Tarixçəsi",
+      label: "Gəlir Tarixçəsi",
       icon: <CreditCard className="h-4 w-4" />,
     },
     {
@@ -170,7 +171,10 @@ const HistorySection = () => {
                 </thead>
                 <tbody>
                   {transferHistory
-                    .sort((a, b) => new Date(b.transferDate) - new Date(a.transferDate))
+                    .sort(
+                      (a, b) =>
+                        new Date(b.transferDate) - new Date(a.transferDate)
+                    )
                     .map((transfer) => (
                       <tr
                         key={transfer.id}
@@ -196,7 +200,7 @@ const HistorySection = () => {
           ) : (
             <div className="p-4 bg-gray-500/10 border border-gray-500/20 rounded-md">
               <p className="text-center text-muted">
-                {isLoading ? "Yüklənir..." : "Köçürmə tarixçəsi tapılmadı"}
+                {isLoading ? "Yüklənir..." : "Hələ heç bir köçürmə edilməyib"}
               </p>
             </div>
           )}
@@ -249,7 +253,7 @@ const HistorySection = () => {
           ) : (
             <div className="p-4 bg-gray-500/10 border border-gray-500/20 rounded-md">
               <p className="text-center text-muted">
-                {isLoading ? "Yüklənir..." : "Hesab tarixçəsi tapılmadı"}
+                {isLoading ? "Yüklənir..." : "Hələ heç bir gəlir qeydə alınmayıb"}
               </p>
             </div>
           )}
@@ -277,7 +281,10 @@ const HistorySection = () => {
                 </thead>
                 <tbody>
                   {loanHistory
-                    .sort((a, b) => new Date(b.operationDate) - new Date(a.operationDate))
+                    .sort(
+                      (a, b) =>
+                        new Date(b.operationDate) - new Date(a.operationDate)
+                    )
                     .map((loan) => (
                       <tr
                         key={loan.id}
@@ -292,7 +299,9 @@ const HistorySection = () => {
                           {loan.amount} AZN
                         </td>
                         <td className="py-3 px-4">{loan.interestRate}%</td>
-                        <td className="py-3 px-4">{loan.loanTermInMonths} ay</td>
+                        <td className="py-3 px-4">
+                          {loan.loanTermInMonths} ay
+                        </td>
                       </tr>
                     ))}
                 </tbody>
@@ -301,7 +310,7 @@ const HistorySection = () => {
           ) : (
             <div className="p-4 bg-gray-500/10 border border-gray-500/20 rounded-md">
               <p className="text-center text-muted">
-                {isLoading ? "Yüklənir..." : "Kredit tarixçəsi tapılmadı"}
+                {isLoading ? "Yüklənir..." : "Hələ heç bir kredit götürülməyib"}
               </p>
             </div>
           )}
