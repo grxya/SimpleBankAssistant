@@ -1,23 +1,24 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AuthData, RegisterData } from "../../data/models/AuthData.model";
-import { LoginUserAction, RegisterUserAction } from "../actions/authAction";
+import { AuthData } from "../../data/models/AuthData.model";
+import {
+  GetUserInfoAction,
+  LoginUserAction,
+  RegisterUserAction,
+  ResetPasswordAction,
+  SendOtpAction,
+  VerifyOtpAction,
+} from "../actions/authAction";
 
 const initialState: AuthData = {
   isLoading: false,
-  isLoggedIn: false,
-  isRegister: false,
-  registerData: {
-    fullname: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  },
+  isLoggedIn: localStorage.getItem("isLoggedIn") === "true",
+  isUserFetching: false,
   user: {
     id: "",
     fullname: "",
     email: "",
-    password: "",
     enabled: false,
+    role: "user",
   },
 };
 
@@ -31,11 +32,23 @@ const authSlice = createSlice({
     setIsLoggedIn: (state, action: PayloadAction<boolean>) => {
       state.isLoggedIn = action.payload;
     },
-    setIsRegister: (state, action: PayloadAction<boolean>) => {
-      state.isRegister = action.payload;
+    setIsUserFetching: (state, action: PayloadAction<boolean>) => {
+      state.isUserFetching = action.payload;
     },
-    setRegisterData: (state, action: PayloadAction<RegisterData>) => {
-      state.registerData = action.payload;
+    signOut: (state) => {
+      state.isLoggedIn = false;
+
+      state.user = {
+        id: "",
+        fullname: "",
+        email: "",
+        enabled: false,
+        role: "user",
+      };
+
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("isLoggedIn");
     },
   },
   extraReducers: (builder) => {
@@ -47,14 +60,14 @@ const authSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(LoginUserAction.fulfilled, (state, action: any) => {
-        state.isLoading = false;
-        state.isRegister = false;
-        state.isLoggedIn = true;
-
         localStorage.setItem("accessToken", action.payload.accessToken);
         localStorage.setItem("refreshToken", action.payload.refreshToken);
+        localStorage.setItem("isLoggedIn", JSON.stringify("true"));
 
-        localStorage.setItem("isLoggedIn", JSON.stringify(state.isLoggedIn));
+        state.isLoading = false;
+        state.isLoggedIn = true;
+
+        state.user.id = action.payload.userId;
       })
       .addCase(RegisterUserAction.pending, (state) => {
         state.isLoading = true;
@@ -64,11 +77,55 @@ const authSlice = createSlice({
       })
       .addCase(RegisterUserAction.fulfilled, (state) => {
         state.isLoading = false;
-        state.isRegister = true;
+      })
+      .addCase(SendOtpAction.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(SendOtpAction.rejected, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(SendOtpAction.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(VerifyOtpAction.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(VerifyOtpAction.rejected, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(VerifyOtpAction.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(ResetPasswordAction.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(ResetPasswordAction.rejected, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(ResetPasswordAction.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(GetUserInfoAction.pending, (state) => {
+        state.isUserFetching = true;
+      })
+      .addCase(GetUserInfoAction.rejected, (state) => {
+        state.isUserFetching = false;
+      })
+      .addCase(GetUserInfoAction.fulfilled, (state, action: any) => {
+        state.isUserFetching = false;
+        state.user = {
+          id: action.payload.id,
+          fullname: action.payload.fullname || "",
+          email: action.payload.email || "",
+          enabled: action.payload.enabled || false,
+          role: action.payload.role || "",
+        };
+
+        localStorage.setItem("userId", state.user.id);
       });
   },
 });
 
-export const { setRegisterData, setIsRegister, setIsLoading } =
+export const { setIsLoading, setIsLoggedIn, setIsUserFetching, signOut } =
   authSlice.actions;
 export default authSlice.reducer;

@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { ArrowRightLeft } from "lucide-react";
 import Card from "./Card";
+import { useMoneyTransfer, useTransferState } from "../store/hooks/useMoneyTransfer";
+import {
+  useAccountState,
+  useCustomerAccount,
+} from "../store/hooks/useCustomerAccountHook";
+import { useAuthState } from "../store/hooks/useAuthHook";
 
 const TransferForm = () => {
   const [senderIban, setSenderIban] = useState("");
@@ -14,21 +19,49 @@ const TransferForm = () => {
   const [showOtp, setShowOtp] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
-  const navigate = useNavigate();
 
-  // Basic IBAN validation (length and format)
+  const { VerifyOtp, InitiateTransfer } = useMoneyTransfer();
+  const { GetIbans } = useCustomerAccount();
+
+    const isLoading = useTransferState().isLoading;
+  
+
+  const user = useAuthState().user;
+
+  const accounts = useAccountState().AccountsInfo;
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        await GetIbans();
+      } catch (err) {
+        console.error("IBAN-ları çəkmək olmadı:", err);
+      }
+    };
+
+    fetchAccounts();
+  }, []);
+
   const validateIban = (iban) => {
     const cleanIban = iban.replace(/\s/g, "").toUpperCase();
-    return (
-      cleanIban.length >= 15 &&
-      cleanIban.length <= 34 &&
-      /^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/.test(cleanIban)
-    );
+    const regex = /^AZ\d{14}$/;
+    return regex.test(cleanIban);
   };
 
   const formatIban = (iban) => {
     const cleanIban = iban.replace(/\s/g, "").toUpperCase();
-    return cleanIban.replace(/(.{4})/g, "$1 ").trim();
+
+    if (cleanIban.length !== 16) return cleanIban;
+
+    return (
+      cleanIban.slice(0, 4) +
+      " " +
+      cleanIban.slice(4, 8) +
+      " " +
+      cleanIban.slice(8, 12) +
+      " " +
+      cleanIban.slice(12, 16)
+    );
   };
 
   const isFormValid =
@@ -38,20 +71,45 @@ const TransferForm = () => {
     Number.parseFloat(amount) > 0 &&
     currency;
 
-  const handleInitialSubmit = (e) => {
+  const handleInitialSubmit = async (e) => {
     e.preventDefault();
     if (isFormValid) {
-      setShowOtp(true);
-      setMessage("");
+      try {
+        const result = await InitiateTransfer({
+          senderIban,
+          receiverIban: receiverIban.replace(/\s/g, ""),
+          amount,
+        });
+        console.log(result);
+        if (result.type === "transfers/initiate/rejected") {
+          setMessage(`❌ Xəta: ${result.payload}`);
+          setMessageType("error");
+        } else {
+          setShowOtp(true);
+          setMessage("");
+        }
+      } catch (error) {
+        setMessage(`❌ Xəta: ${error.message || error}`);
+        setMessageType("error");
+      }
     } else {
       setMessage("Bütün sahələri düzgün doldurun. IBAN formatını yoxlayın.");
       setMessageType("error");
     }
   };
 
-  const handleFinalSubmit = (e) => {
+  const handleFinalSubmit = async (e) => {
     e.preventDefault();
-    if (otp === "123456") {
+    const result = await VerifyOtp({
+      email: user.email,
+      code: otp,
+    });
+    console.log(result);
+
+    if (result.type === "transfers/verify-otp/rejected") {
+      setMessage(`❌ Xəta: ${result.payload}`);
+      setMessageType("error");
+    } else {
       setMessage("Köçürmə uğurla tamamlandı!");
       setMessageType("success");
       setTimeout(() => {
@@ -62,19 +120,26 @@ const TransferForm = () => {
         setOtp("");
         setShowOtp(false);
         setMessage("");
-        navigate("/user");
-      }, 2000);
-    } else {
-      setMessage("OTP kodu yanlışdır.");
-      setMessageType("error");
+      }, 6000);
     }
   };
 
   const handleReceiverIbanChange = (e) => {
-    const value = e.target.value.replace(/[^A-Z0-9\s]/gi, "").toUpperCase();
-    if (value.length <= 34) {
-      setReceiverIban(formatIban(value));
+    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+    if (value.length > 16) {
+      value = value.slice(0, 16);
     }
+
+    let formatted = "";
+    for (let i = 0; i < value.length; i++) {
+      if (i === 4 || i === 8 || i === 12) {
+        formatted += " ";
+      }
+      formatted += value[i];
+    }
+
+    setReceiverIban(formatted);
   };
 
   return (
@@ -94,20 +159,25 @@ const TransferForm = () => {
             </label>
             <select
               value={senderIban}
-              onChange={(e) => setSenderIban(e.target.value)}
+              onChange={(e) => {
+                setSenderIban(e.target.value);
+
+                const selectedAccount = accounts.find(
+                  (acc) => acc.iban === e.target.value
+                );
+                if (selectedAccount) {
+                  setCurrency(selectedAccount.currency);
+                }
+              }}
               className="w-full p-3 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-lime-500 transition-colors text-black"
               disabled={showOtp}
             >
               <option value="">-- IBAN seçin --</option>
-              <option value="AZ21NABZ00000000137010001944">
-                AZ21 NABZ 0000 0000 1370 1000 1944
-              </option>
-              <option value="AZ77AIIB37120001944000000001">
-                AZ77 AIIB 3712 0001 9440 0000 0001
-              </option>
-              <option value="AZ96AZEJ00000000001234567890">
-                AZ96 AZEJ 0000 0000 0012 3456 7890
-              </option>
+              {accounts.map((acc) => (
+                <option key={acc.customerId} value={acc.iban}>
+                  {formatIban(acc.iban)} ({acc.currency})
+                </option>
+              ))}
             </select>
           </div>
 
@@ -119,18 +189,23 @@ const TransferForm = () => {
               type="text"
               value={receiverIban}
               onChange={handleReceiverIbanChange}
-              className={`w-full p-3 rounded-md bg-surface-hover border transition-colors text-black font-mono ${
+              className={`w-full p-3 rounded-md bg-surface-hover border transition-colors text-black ${
                 receiverIban && !validateIban(receiverIban)
                   ? "border-red-500 focus:border-red-500"
                   : "border-surface-hover focus:border-lime-500"
               } focus:outline-none`}
-              placeholder="AZ21 NABZ 0000 0000 1370 1000 1944"
+              placeholder="AZ21 0000 0000 1370"
               disabled={showOtp}
             />
             {receiverIban && !validateIban(receiverIban) && (
-              <p className="text-red-500 text-xs mt-1">
-                IBAN formatı düzgün deyil (15-34 simvol, AZ21 ilə başlamalıdır)
-              </p>
+              <div className="text-red-500 text-xs mt-1">
+                <p>IBAN formatı düzgün deyil:</p>
+                <div className="pl-2">
+                  <p>- 16 simvol olmalıdır</p>
+                  <p>- "AZ" ilə başlamalıdır</p>
+                  <p>- Qalan 14 simvol yalnız rəqəm olmalıdır</p>
+                </div>
+              </div>
             )}
           </div>
 
@@ -146,23 +221,6 @@ const TransferForm = () => {
               placeholder="Məbləği daxil edin"
               disabled={showOtp}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Valyuta:</label>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full text-black p-3 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-lime-500 transition-colors"
-              disabled={showOtp}
-            >
-              <option value="AZN">AZN - Azərbaycan Manatı</option>
-              <option value="USD">USD - ABŞ Dolları</option>
-              <option value="EUR">EUR - Avro</option>
-              <option value="GBP">GBP - İngilis Funtu</option>
-              <option value="RUB">RUB - Rus Rublu</option>
-              <option value="TRY">TRY - Türk Lirəsi</option>
-            </select>
           </div>
 
           {showOtp && (
@@ -219,16 +277,17 @@ const TransferForm = () => {
           <button
             type="submit"
             className={`w-full py-3 px-6 rounded-xl flex items-center justify-center transition-all bg-orange-teal-gradient text-white hover-lift ${
-              (showOtp && otp.length !== 6) || (!showOtp && !isFormValid)
+              (showOtp && otp.length !== 6) || (!showOtp && !isFormValid) || (isLoading)
                 ? "opacity-70 cursor-not-allowed"
                 : ""
             }`}
             disabled={
-              (showOtp && otp.length !== 6) || (!showOtp && !isFormValid)
+              (showOtp && otp.length !== 6) || (!showOtp && !isFormValid) || (isLoading)
             }
           >
             <ArrowRightLeft className="h-4 w-4 mr-2" />
-            {showOtp ? "Köçürməni təsdiq et" : "Davam et"}
+            {isLoading ? "Yüklənir..." : (showOtp ? "Köçürməni təsdiq et" : "Davam et")}
+
           </button>
         </form>
       </Card>

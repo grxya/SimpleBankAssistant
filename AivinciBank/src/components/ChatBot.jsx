@@ -13,14 +13,14 @@ const ChatBot = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const [showLanguageSelector, setShowLanguageSelector] = useState(true);
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [userInput, setuserInput] = useState("");
   const messagesEndRef = useRef(null);
   const chatRef = useRef(null);
 
   const { AskBot } = useChatBot();
 
   const languages = {
-    az: {
+    AZE: {
       name: "Azərbaycan",
       flag: "🇦🇿",
       welcome:
@@ -29,7 +29,7 @@ const ChatBot = () => {
       response:
         "Təşəkkür edirəm! Sorğunuzu qəbul etdim. Sizə daha ətraflı məlumat vermək üçün bankın mütəxəssisi tezliklə sizinlə əlaqə saxlayacaq.",
     },
-    ru: {
+    RUS: {
       name: "Русский",
       flag: "🇷🇺",
       welcome: "Привет! Я AI-помощник банка Aivinci. Как я могу вам помочь?",
@@ -37,7 +37,7 @@ const ChatBot = () => {
       response:
         "Спасибо! Я принял ваш запрос. Специалист банка свяжется с вами в ближайшее время для предоставления подробной информации.",
     },
-    en: {
+    ENG: {
       name: "English",
       flag: "🇺🇸",
       welcome: "Hello! I'm Aivinci Bank's AI assistant. How can I help you?",
@@ -91,20 +91,20 @@ const ChatBot = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
-    if (newMessage.trim() === "" || !selectedLanguage) return;
+    if (userInput.trim() === "" || !selectedLanguage) return;
 
     const userMessage = {
       id: messages.length + 1,
-      text: newMessage,
+      text: userInput,
       isBot: false,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setNewMessage("");
+    setuserInput("");
     setIsTyping(true);
 
     try {
-      const botReply = await AskBot(newMessage);
+      const botReply = await AskBot({ userInput, language: selectedLanguage });
 
       const botResponse = {
         id: messages.length + 2,
@@ -129,7 +129,7 @@ const ChatBot = () => {
     setSelectedLanguage(null);
     setShowLanguageSelector(true);
     setMessages([]);
-    setNewMessage("");
+    setuserInput("");
   };
 
   // Modern minimalist icons
@@ -526,8 +526,8 @@ const ChatBot = () => {
               <form onSubmit={handleSendMessage} className="relative">
                 <input
                   type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  value={userInput}
+                  onChange={(e) => setuserInput(e.target.value)}
                   placeholder={
                     selectedLanguage
                       ? languages[selectedLanguage].placeholder
@@ -545,7 +545,7 @@ const ChatBot = () => {
 
                 <button
                   type="submit"
-                  disabled={!newMessage.trim()}
+                  disabled={!userInput.trim()}
                   className="absolute right-2 top-2 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-white hover:scale-110"
                   style={{
                     background:

@@ -11,14 +11,11 @@ export const InitiateTransferAction = createAsyncThunk(
   "transfers/initiate",
   async (TransferDTO: TransferDTO, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
-        Url: `${baseUrl}/`,
+        Url: `${baseUrl}/initiate`,
         Method: "POST",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         Data: TransferDTO,
       });
@@ -33,14 +30,11 @@ export const VerifyOtpAction = createAsyncThunk(
   "transfers/verify-otp",
   async (OtpVerifyTransferDTO: OtpVerifyTransferDTO, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/verify-otp`,
         Method: "POST",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         Data: OtpVerifyTransferDTO,
       });

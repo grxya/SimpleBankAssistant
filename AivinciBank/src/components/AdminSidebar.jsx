@@ -4,9 +4,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../components/ThemeContext";
 import {
-  LineChartIcon as ChartLineUp,
-  ArrowRightLeft,
-  UserCog,
   LogOut,
   Menu,
   Sun,
@@ -14,34 +11,18 @@ import {
   ChevronRight,
   BarChart3,
   Home,
-  Coins,
+  Shield,
 } from "lucide-react";
 
-const Sidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
+const AdminSidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
   const { darkMode, toggleDarkMode } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const menuItems = [
-    { id: "info", label: "Panel", icon: <Coins className="h-5 w-5" /> },
     {
-      id: "accounts",
-      label: "Hesablar",
+      id: "dashboard",
+      label: "Panel",
       icon: <BarChart3 className="h-5 w-5" />,
-    },
-    {
-      id: "transfer",
-      label: "Köçürmələr",
-      icon: <ArrowRightLeft className="h-5 w-5" />,
-    },
-    {
-      id: "loans",
-      label: "Kreditlər",
-      icon: <ChartLineUp className="h-5 w-5" />,
-    },
-    {
-      id: "history",
-      label: "Tarixçə",
-      icon: <UserCog className="h-5 w-5" />,
     },
   ];
 
@@ -51,7 +32,7 @@ const Sidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
       <div className="lg:hidden fixed top-4 left-4 z-30">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 rounded-full bg-lime-500 text-white shadow-md"
+          className="p-2 rounded-full bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white shadow-md transition-colors"
           aria-label="Toggle menu"
         >
           <Menu className="h-6 w-6" />
@@ -60,18 +41,19 @@ const Sidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
 
       {/* Sidebar for desktop and mobile */}
       <div
-        className={`h-screen w-64 pt-7 pb-0 p-4 flex flex-col fixed left-0 top-0 z-20 transition-transform duration-300 transform lg:translate-x-0 ${
+        className={`h-screen bg-white dark:bg-gray-800 w-64 pt-7 pb-0 p-4 flex flex-col fixed left-0 top-0 z-20 transition-transform duration-300 transform lg:translate-x-0 ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } border-r border-surface-hover bg-background`}
+        } border-r border-gray-200 dark:border-gray-700 shadow-lg dark:shadow-gray-900/20`}
       >
         {/* Header with logo and theme toggle */}
         <div className="flex items-center justify-between mb-10">
-          <div className="flex items-center gap-2 display-font text-xl font-bold">
-            Aivinci Bank
+          <div className="flex items-center gap-2 display-font text-xl font-bold text-red-600 dark:text-red-400">
+            <Shield className="h-6 w-6" />
+            Aivinci Admin
           </div>
           <button
             onClick={toggleDarkMode}
-            className="p-2 rounded-full hover:bg-surface-hover transition-colors"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
             aria-label="Toggle Theme"
           >
             {darkMode ? (
@@ -85,7 +67,7 @@ const Sidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
         <nav className="flex flex-col gap-2 flex-grow">
           <Link
             to="/"
-            className="flex items-center gap-3 py-3 px-4 rounded-md hover:bg-surface-hover transition-colors"
+            className="flex items-center gap-3 py-3 px-4 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <Home className="h-5 w-5" />
@@ -101,8 +83,8 @@ const Sidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
               }}
               className={`flex items-center gap-3 py-3 px-4 rounded-md transition-colors text-left ${
                 activeSection === item.id
-                  ? "bg-orange-teal-gradient text-white"
-                  : "hover:bg-surface-hover"
+                  ? "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
               }`}
             >
               {item.icon}
@@ -113,14 +95,14 @@ const Sidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
             </button>
           ))}
 
-          <div className="border-t border-surface-hover my-4"></div>
+          <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
 
           <button
             onClick={() => {
               onSignOutClick();
               setIsMobileMenuOpen(false);
             }}
-            className="flex items-center gap-3 py-3 px-4 rounded-md hover:bg-surface-hover transition-colors"
+            className="flex items-center gap-3 py-3 px-4 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
           >
             <LogOut className="h-5 w-5" />
             <span>Çıxış</span>
@@ -139,4 +121,5 @@ const Sidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
   );
 };
 
-export default Sidebar;
+export default AdminSidebar;
+

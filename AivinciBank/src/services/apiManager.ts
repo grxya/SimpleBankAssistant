@@ -1,5 +1,6 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { ApiRequest } from "../data/models/ApiRequest.model";
+import axiosInstance from "./axiosInstance";
 
 class ApiManager {
   static async apiRequest<T>(apiData: ApiRequest): Promise<T> {
@@ -20,12 +21,12 @@ class ApiManager {
         withCredentials: apiData.WithCredentials ?? false,
       };
 
-      const response: AxiosResponse<T> = await axios(config);
+      const response: AxiosResponse<T> = await axiosInstance(config);
       return response.data;
     } catch (error: any) {
       let errorMessage = "Unknown error";
-      if (axios.isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || error.message;
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }

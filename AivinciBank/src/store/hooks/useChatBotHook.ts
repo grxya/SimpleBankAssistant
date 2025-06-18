@@ -1,14 +1,14 @@
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../store";
 import { AskAction } from "../actions/chatBotAction";
+import { ChatbotRequestDTO } from "../../data/dtos/ChatBot.dto";
 
 export const useChatBot = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const AskBot = async (question: string) => {
+  const AskBot = async (ChatbotRequestDTO: ChatbotRequestDTO) => {
     try {
-      const resultAction = await dispatch(AskAction(question));
-      console.log(resultAction);
+      const resultAction = await dispatch(AskAction(ChatbotRequestDTO));
 
       if (AskAction.fulfilled.match(resultAction)) {
         return resultAction.payload;

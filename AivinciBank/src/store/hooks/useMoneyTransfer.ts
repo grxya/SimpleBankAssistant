@@ -1,5 +1,5 @@
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "../store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../store";
 import {
   InitiateTransferAction,
   VerifyOtpAction,
@@ -15,14 +15,18 @@ export const useMoneyTransfer = () => {
   const InitiateTransfer = async (transferData: TransferDTO) => {
     const result = await dispatch(InitiateTransferAction(transferData));
     console.log(result);
-    return result.meta.requestStatus === "fulfilled";
+    return result;
   };
 
   const VerifyOtp = async (otpData: OtpVerifyTransferDTO) => {
     const result = await dispatch(VerifyOtpAction(otpData));
     console.log(result.type);
-    return result.meta.requestStatus === "fulfilled";
+    return result;
   };
 
   return { InitiateTransfer, VerifyOtp };
+};
+
+export const useTransferState = () => {
+  return useSelector((state: RootState) => state.moneyTransfer);
 };

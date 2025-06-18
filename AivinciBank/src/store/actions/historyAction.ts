@@ -7,14 +7,29 @@ export const GetTransferHistoryAction = createAsyncThunk(
   "history/transfer",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/transfer`,
         Method: "GET",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+export const GetIncomeHistoryAction = createAsyncThunk(
+  "history/income",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await ApiManager.apiRequest({
+        Url: `${baseUrl}/income`,
+        Method: "GET",
+        Headers: {
+          "Content-Type": "application/json",
         },
       });
       return response;
@@ -28,14 +43,11 @@ export const GetAccountHistoryAction = createAsyncThunk(
   "history/customer",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/customer`,
         Method: "GET",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
       return response;

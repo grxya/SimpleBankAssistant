@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "./ThemeContext";
+import { useAuthState, useAuth } from "../store/hooks/useAuthHook";
 
 const Header = ({ customerType, setCustomerType }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,10 +18,15 @@ const Header = ({ customerType, setCustomerType }) => {
   const accountButtonRef = useRef(null);
   const headerRef = useRef(null);
 
-  // Get username from localStorage if available
-  const [username, setUsername] = useState(() => {
-    return localStorage.getItem("username") || null;
-  });
+  const { isLoggedIn, user } = useAuthState();
+
+  const { SignOut } = useAuth();
+
+  const [username, setUsername] = useState("İstifadəçi");
+
+  useEffect(() => {
+    setUsername(user.fullname || "İstifadəçi");
+  }, [user.fullname]);
 
   const navLinks = [
     {
@@ -592,10 +598,10 @@ const Header = ({ customerType, setCustomerType }) => {
                     <div className="px-4 py-3 border-b border-border/10">
                       <p className="text-sm text-muted">Xoş gəlmisiniz</p>
                       <p className="font-medium text-foreground">
-                        {username ? username : "Aivinci Bank"}
+                        {username != "İstifadəçi" ? username : "Aivinci Bank"}
                       </p>
                     </div>
-                    {!username ? (
+                    {!isLoggedIn ? (
                       <>
                         <Link
                           to="/login"
@@ -643,9 +649,7 @@ const Header = ({ customerType, setCustomerType }) => {
                         <button
                           className="flex items-center px-4 py-3 hover:bg-accent/5 transition-colors w-full text-left rounded-md m-1"
                           onClick={() => {
-                            localStorage.removeItem("username");
-                            setUsername(null);
-                            setShowAccountMenu(false);
+                            SignOut();
                           }}
                         >
                           <div>
@@ -858,7 +862,7 @@ const Header = ({ customerType, setCustomerType }) => {
                 </div>
 
                 <div className="space-y-3">
-                  {!username ? (
+                  {!isLoggedIn ? (
                     <>
                       <Link
                         to="/login"
@@ -894,9 +898,7 @@ const Header = ({ customerType, setCustomerType }) => {
                     <button
                       className="flex items-center p-3 rounded-md hover:bg-accent/5 transition-colors w-full text-left"
                       onClick={() => {
-                        localStorage.removeItem("username");
-                        setUsername(null);
-                        setIsMenuOpen(false);
+                        SignOut();
                       }}
                     >
                       <div>

@@ -1,22 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
 
 import Card from "./Card";
+import { Plus, DollarSign, RefreshCw, Trash2, Eye } from "lucide-react";
 import {
-  CreditCard,
-  Plus,
-  DollarSign,
-  RefreshCw,
-  Trash2,
-  Eye,
-} from "lucide-react";
-import { useCustomerAccount } from "../store/hooks/useCustomerAccountHook";
+  useCustomerAccount,
+  useAccountState,
+} from "../store/hooks/useCustomerAccountHook";
 
 const AccountsSection = () => {
-  const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.history || {});
+  const { loading } = useAccountState();
 
   const [currency, setCurrency] = useState("AZN");
   const [createMessage, setCreateMessage] = useState("");
@@ -27,6 +21,7 @@ const AccountsSection = () => {
 
   const [viewAccountId, setViewAccountId] = useState("");
   const [currentBalance, setCurrentBalance] = useState(null);
+  const [balanceCurrency, setBalanceCurrency] = useState("AZN");
 
   const [closeAccountId, setCloseAccountId] = useState("");
   const [closeMessage, setCloseMessage] = useState("");
@@ -34,6 +29,9 @@ const AccountsSection = () => {
   const [convertAccountId, setConvertAccountId] = useState("");
   const [toCurrency, setToCurrency] = useState("USD");
   const [convertMessage, setConvertMessage] = useState("");
+  const [convertBalance, setConvertBalance] = useState(null);
+
+  const [refreshIbansFlag, setRefreshIbansFlag] = useState(false);
 
   const {
     CreateAccount,
@@ -41,21 +39,40 @@ const AccountsSection = () => {
     GetBalance,
     CloseAccount,
     ConvertCurrency,
+    GetIbans,
   } = useCustomerAccount();
 
   const currencies = ["AZN", "USD", "EUR"];
-  const mockAccounts = [
-    { id: "acc_1", iban: "AZ21NABZ00000000137010001944", currency: "AZN" },
-    { id: "acc_2", iban: "AZ77NABZ00000000137010001945", currency: "USD" },
-  ];
+
+  const accounts = useAccountState().AccountsInfo;
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        await GetIbans();
+      } catch (err) {
+        console.error("IBAN-ları çəkmək olmadı:", err);
+      }
+    };
+
+    fetchAccounts();
+  }, [refreshIbansFlag, GetIbans]);
 
   const handleCreateAccount = async (e) => {
     e.preventDefault();
     try {
-      await CreateAccount({ currency });
-      setCreateMessage("✅ Hesab uğurla yaradıldı!");
-      setCurrency("AZN");
-      setTimeout(() => setCreateMessage(""), 3000);
+      const result = await CreateAccount({ currency });
+      if (result.type === "accounts/create/rejected") {
+        setCreateMessage(`❌ Xəta: ${result.payload}`);
+      } else {
+        setCreateMessage("✅ Hesab uğurla yaradıldı!");
+        setRefreshIbansFlag((prev) => !prev);
+
+        setTimeout(() => {
+          setCreateMessage("");
+          setCurrency("AZN");
+        }, 6000);
+      }
     } catch (error) {
       setCreateMessage(`❌ Xəta: ${error.message || error}`);
     }
@@ -69,13 +86,19 @@ const AccountsSection = () => {
     }
 
     try {
-      await UpdateBalance({
-        accountId: selectedAccountId,
-        BalanceUpdateDTO: { amount: parseFloat(balanceAmount) },
+      const result = await UpdateBalance(selectedAccountId, {
+        amount: parseFloat(balanceAmount),
       });
-      setBalanceMessage("✅ Balans uğurla yeniləndi!");
-      setBalanceAmount("");
-      setTimeout(() => setBalanceMessage(""), 3000);
+      if (result.type === "accounts/updateBalance/rejected") {
+        setBalanceMessage(`❌ Xəta: ${result.payload}`);
+      } else {
+        setBalanceMessage("✅ Balans uğurla yeniləndi!");
+
+        setTimeout(() => {
+          setBalanceMessage("");
+          setBalanceAmount("");
+        }, 6000);
+      }
     } catch (error) {
       setBalanceMessage(`❌ Xəta: ${error.message || error}`);
     }
@@ -87,7 +110,7 @@ const AccountsSection = () => {
 
     try {
       const result = await GetBalance(viewAccountId);
-      setCurrentBalance(result);
+      setCurrentBalance(result.payload);
     } catch (error) {
       console.error("Balance fetch error:", error);
     }
@@ -101,10 +124,19 @@ const AccountsSection = () => {
     }
 
     try {
-      await CloseAccount(closeAccountId);
-      setCloseMessage("✅ Hesab uğurla bağlandı!");
-      setCloseAccountId("");
-      setTimeout(() => setCloseMessage(""), 3000);
+      const result = await CloseAccount(closeAccountId);
+
+      if (result.type === "accounts/closeAccount/rejected") {
+        setCloseMessage(`❌ Xəta: ${result.payload}`);
+      } else {
+        setCloseMessage("✅ Hesab uğurla bağlandı!");
+        setRefreshIbansFlag((prev) => !prev);
+
+        setTimeout(() => {
+          setCloseMessage("");
+          setCloseAccountId("");
+        }, 6000);
+      }
     } catch (error) {
       setCloseMessage(`❌ Xəta: ${error.message || error}`);
     }
@@ -118,13 +150,22 @@ const AccountsSection = () => {
     }
 
     try {
-      await ConvertCurrency({
-        accountId: convertAccountId,
-        CurrencyConversionDTO: { toCurrency },
-      });
-      setConvertMessage("✅ Valyuta uğurla çevrildi!");
-      setConvertAccountId("");
-      setTimeout(() => setConvertMessage(""), 3000);
+      const result = await ConvertCurrency(convertAccountId, { toCurrency });
+
+      if (result.type === "accounts/convertCurrency/rejected") {
+        setConvertMessage(`❌ Xəta: ${result.payload}`);
+      } else {
+        setConvertBalance(result.payload);
+        setConvertMessage("✅ Valyuta uğurla çevrildi!");
+        setRefreshIbansFlag((prev) => !prev);
+
+        setTimeout(() => {
+          setConvertBalance(null);
+          setConvertMessage("");
+          setConvertAccountId("");
+          setToCurrency("USD");
+        }, 6000);
+      }
     } catch (error) {
       setConvertMessage(`❌ Xəta: ${error.message || error}`);
     }
@@ -160,10 +201,10 @@ const AccountsSection = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading.create}
               className="w-full py-3 px-4 bg-orange-teal-gradient text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? "Yaradılır..." : "Hesab Yarat"}
+              {loading.create ? "Yaradılır..." : "Hesab Yarat"}
             </button>
 
             {createMessage && (
@@ -183,8 +224,8 @@ const AccountsSection = () => {
                 className="w-full p-3 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-lime-500 transition-colors text-black"
               >
                 <option value="">-- Hesab seçin --</option>
-                {mockAccounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
+                {accounts.map((acc) => (
+                  <option key={acc.customerId} value={acc.customerId}>
                     {acc.iban} ({acc.currency})
                   </option>
                 ))}
@@ -205,10 +246,10 @@ const AccountsSection = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading.update}
               className="w-full py-3 px-4 bg-orange-teal-gradient text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? "Yenilənir..." : "Balansı Yenilə"}
+              {loading.update ? "Yenilənir..." : "Balansı Yenilə"}
             </button>
 
             {balanceMessage && (
@@ -224,12 +265,21 @@ const AccountsSection = () => {
               <label className="block mb-2 font-medium">Hesab:</label>
               <select
                 value={viewAccountId}
-                onChange={(e) => setViewAccountId(e.target.value)}
+                onChange={(e) => {
+                  setViewAccountId(e.target.value);
+                  const selectedAccount = accounts.find(
+                    (acc) => acc.customerId === Number(e.target.value)
+                  );
+                  console.log(selectedAccount);
+                  if (selectedAccount) {
+                    setBalanceCurrency(selectedAccount.currency);
+                  }
+                }}
                 className="w-full p-3 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-lime-500 transition-colors text-black"
               >
                 <option value="">-- Hesab seçin --</option>
-                {mockAccounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
+                {accounts.map((acc) => (
+                  <option key={acc.customerId} value={acc.customerId}>
                     {acc.iban} ({acc.currency})
                   </option>
                 ))}
@@ -238,16 +288,16 @@ const AccountsSection = () => {
 
             <button
               type="submit"
-              disabled={loading || !viewAccountId}
+              disabled={loading.getBalance || !viewAccountId}
               className="w-full py-3 px-4 bg-orange-teal-gradient text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? "Yüklənir..." : "Balansa Bax"}
+              {loading.getBalance ? "Yüklənir..." : "Balansa Bax"}
             </button>
 
             {currentBalance && (
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-md">
                 <p className="text-center font-medium text-green-600">
-                  Balans: {currentBalance.amount} {currentBalance.currency}
+                  Balans: {currentBalance} {balanceCurrency}
                 </p>
               </div>
             )}
@@ -265,8 +315,8 @@ const AccountsSection = () => {
                 className="w-full p-3 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-lime-500 transition-colors text-black"
               >
                 <option value="">-- Hesab seçin --</option>
-                {mockAccounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
+                {accounts.map((acc) => (
+                  <option key={acc.customerId} value={acc.customerId}>
                     {acc.iban} ({acc.currency})
                   </option>
                 ))}
@@ -290,11 +340,19 @@ const AccountsSection = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading.convert}
               className="w-full py-3 px-4 bg-orange-teal-gradient text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? "Çevrilir..." : "Valyuta Çevir"}
+              {loading.convert ? "Çevrilir..." : "Valyuta Çevir"}
             </button>
+
+            {convertBalance && (
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-md">
+                <p className="text-center font-medium text-green-600">
+                  Balans: {convertBalance}
+                </p>
+              </div>
+            )}
 
             {convertMessage && (
               <p className="text-center font-medium">{convertMessage}</p>
@@ -319,8 +377,8 @@ const AccountsSection = () => {
                 className="w-full p-3 rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-lime-500 transition-colors text-black"
               >
                 <option value="">-- Hesab seçin --</option>
-                {mockAccounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
+                {accounts.map((acc) => (
+                  <option key={acc.customerId} value={acc.customerId}>
                     {acc.iban} ({acc.currency})
                   </option>
                 ))}
@@ -336,10 +394,10 @@ const AccountsSection = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading.close}
               className="w-full py-3 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
             >
-              {loading ? "Bağlanır..." : "Hesabı Bağla"}
+              {loading.close ? "Bağlanır..." : "Hesabı Bağla"}
             </button>
 
             {closeMessage && (

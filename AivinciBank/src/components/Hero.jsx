@@ -2,13 +2,17 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./ThemeContext";
+import { useAuthState } from "../store/hooks/useAuthHook";
 
 const Hero = () => {
   const { darkMode } = useTheme();
+  const { user } = useAuthState();
 
-  const [username, setUsername] = useState(() => {
-    return localStorage.getItem("username") || null;
-  });
+  const [username, setUsername] = useState("Adınız Soyadınız");
+
+  useEffect(() => {
+    setUsername(user.fullname || "Adınız Soyadınız");
+  }, [user.fullname]);
 
   const slides = [
     {
@@ -910,7 +914,7 @@ const Hero = () => {
                           darkMode ? "text-white" : "text-white"
                         } font-medium text-sm truncate`}
                       >
-                        {username ? username : "Adınız Soyadınız"}
+                        {username}
                       </div>
                     </div>
                     <div>

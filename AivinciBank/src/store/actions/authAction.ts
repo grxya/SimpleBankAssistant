@@ -4,18 +4,18 @@ import {
   AuthDTO,
   OtpSendDTO,
   OtpVerifyDTO,
-  RefreshDTO,
+  ResetPasswordDTO,
 } from "../../data/dtos/Auth.dto";
 import ApiManager from "../../services/apiManager";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/auth`;
+const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const LoginUserAction = createAsyncThunk(
   "auth/login",
   async (LoginDTO: LoginDTO, { rejectWithValue }) => {
     try {
       const response = await ApiManager.apiRequest({
-        Url: `${baseUrl}/login`,
+        Url: `${baseUrl}/auth/login`,
         Method: "POST",
         Headers: {
           "Content-Type": "application/json",
@@ -34,7 +34,7 @@ export const RegisterUserAction = createAsyncThunk(
   async (AuthDTO: AuthDTO, { rejectWithValue }) => {
     try {
       const response = await ApiManager.apiRequest({
-        Url: `${baseUrl}/register`,
+        Url: `${baseUrl}/auth/register`,
         Method: "POST",
         Headers: {
           "Content-Type": "application/json",
@@ -48,31 +48,12 @@ export const RegisterUserAction = createAsyncThunk(
   }
 );
 
-export const RefreshUserAction = createAsyncThunk(
-  "auth/refresh",
-  async (RefreshDTO: RefreshDTO, { rejectWithValue }) => {
-    try {
-      const response = await ApiManager.apiRequest({
-        Url: `${baseUrl}/refresh`,
-        Method: "POST",
-        Headers: {
-          "Content-Type": "application/json",
-        },
-        Data: RefreshDTO,
-      });
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error);
-    }
-  }
-);
-
 export const SendOtpAction = createAsyncThunk(
   "auth/send-otp",
   async (OtpSendDTO: OtpSendDTO, { rejectWithValue }) => {
     try {
       const response = await ApiManager.apiRequest({
-        Url: `${baseUrl}/send-otp`,
+        Url: `${baseUrl}/auth/send-otp`,
         Method: "POST",
         Headers: {
           "Content-Type": "application/json",
@@ -91,7 +72,7 @@ export const VerifyOtpAction = createAsyncThunk(
   async (OtpVerifyDTO: OtpVerifyDTO, { rejectWithValue }) => {
     try {
       const response = await ApiManager.apiRequest({
-        Url: `${baseUrl}/verify-otp`,
+        Url: `${baseUrl}/auth/verify-otp`,
         Method: "POST",
         Headers: {
           "Content-Type": "application/json",
@@ -104,3 +85,42 @@ export const VerifyOtpAction = createAsyncThunk(
     }
   }
 );
+
+export const ResetPasswordAction = createAsyncThunk(
+  "auth/reset-password",
+  async (ResetPasswordDTO: ResetPasswordDTO, { rejectWithValue }) => {
+    try {
+      const response = await ApiManager.apiRequest({
+        Url: `${baseUrl}/auth/reset-password`,
+        Method: "POST",
+        Headers: {
+          "Content-Type": "application/json",
+        },
+        Data: ResetPasswordDTO,
+      });
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+export const GetUserInfoAction = createAsyncThunk(
+  "users/current",
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      
+      const response = await ApiManager.apiRequest({
+        Url: `${baseUrl}/users/${userId}`,
+        Method: "GET",
+        Headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error);
+    }
+  }
+);
+

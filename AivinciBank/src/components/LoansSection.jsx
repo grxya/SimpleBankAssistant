@@ -2,12 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  ApplyForLoanAction,
-  GetLoanDebtAction,
-  GetTotalLoanDebtAction,
-  GetLoanHistoryAction,
-} from "../store/actions/loanAction";
+
 import Card from "./Card";
 import {
   CreditCard,
@@ -16,22 +11,22 @@ import {
   History,
   AlertCircle,
 } from "lucide-react";
+import { useLoanState, useLoan } from "../store/hooks/useLoanHook";
 
 const LoansSection = () => {
-  const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.history || {});
+  const { isLoadingApply, isLoading } = useLoanState();
 
-  // Apply for Loan State
   const [amount, setAmount] = useState("");
-  const [loanTermInMonths, setLoanTermInMonths] = useState("12");
+  const [loanTermInMonths, setLoanTermInMonths] = useState("6");
   const [loanPurpose, setLoanPurpose] = useState("");
   const [ibanSuffix, setIbanSuffix] = useState("");
   const [applyMessage, setApplyMessage] = useState("");
 
-  // Debt Information State
   const [currentDebt, setCurrentDebt] = useState(null);
   const [totalDebt, setTotalDebt] = useState(null);
   const [loanHistory, setLoanHistory] = useState([]);
+
+  const [refreshFlag, setRefreshFlag] = useState(false);
 
   const loanTerms = [
     { value: "6", label: "6 ay" },
@@ -51,14 +46,21 @@ const LoansSection = () => {
     "Digər",
   ];
 
+  const { ApplyForLoan, GetLoanDebt, GetTotalLoanDebt, GetLoanHistory } =
+    useLoan();
+
   useEffect(() => {
-    // Load debt information on component mount
     handleGetCurrentDebt();
     handleGetTotalDebt();
-    handleGetLoanHistoryAction();
-  }, []);
+    handleGetLoanHistory();
+  }, [refreshFlag]);
 
-  const handleApplyForLoanAction = async (e) => {
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString();
+  };
+
+  const handleApplyForLoan = async (e) => {
     e.preventDefault();
     if (!amount || !loanPurpose || !ibanSuffix) {
       setApplyMessage("❌ Bütün sahələri doldurun");
@@ -66,20 +68,24 @@ const LoansSection = () => {
     }
 
     try {
-      await dispatch(
-        ApplyForLoanAction({
-          amount: parseFloat(amount),
-          loanTermInMonths: parseInt(loanTermInMonths),
-          loanPurpose,
-          ibanSuffix,
-        })
-      ).unwrap();
+      const result = await ApplyForLoan({
+        amount: parseFloat(amount),
+        loanTermInMonths: parseInt(loanTermInMonths),
+        loanPurpose,
+        ibanSuffix,
+      });
 
-      setApplyMessage("✅ Kredit müraciəti uğurla göndərildi!");
-      setAmount("");
-      setLoanPurpose("");
-      setIbanSuffix("");
-      setTimeout(() => setApplyMessage(""), 3000);
+      if (result.type === "loans/apply/rejected") {
+        setApplyMessage(`❌ Xəta: ${result}`);
+      } else {
+        setRefreshFlag((prev) => !prev);
+        setApplyMessage("✅ Kredit müraciəti uğurla göndərildi!");
+        setAmount("");
+        setLoanPurpose("");
+        setIbanSuffix("");
+        setLoanTermInMonths("6");
+        setTimeout(() => setApplyMessage(""), 6000);
+      }
     } catch (error) {
       setApplyMessage(`❌ Xəta: ${error}`);
     }
@@ -87,8 +93,9 @@ const LoansSection = () => {
 
   const handleGetCurrentDebt = async () => {
     try {
-      const result = await dispatch(GetLoanDebtAction()).unwrap();
-      setCurrentDebt(result);
+      const result = await GetLoanDebt();
+      console.log(result);
+      setCurrentDebt(result.payload);
     } catch (error) {
       console.error("Current debt fetch error:", error);
     }
@@ -96,17 +103,17 @@ const LoansSection = () => {
 
   const handleGetTotalDebt = async () => {
     try {
-      const result = await dispatch(GetTotalLoanDebtAction()).unwrap();
-      setTotalDebt(result);
+      const result = await GetTotalLoanDebt();
+      setTotalDebt(result.payload);
     } catch (error) {
       console.error("Total debt fetch error:", error);
     }
   };
 
-  const handleGetLoanHistoryAction = async () => {
+  const handleGetLoanHistory = async () => {
     try {
-      const result = await dispatch(GetLoanHistoryAction()).unwrap();
-      setLoanHistory(result || []);
+      const result = await GetLoanHistory();
+      setLoanHistory(result.payload || []);
     } catch (error) {
       console.error("Loan history fetch error:", error);
     }
@@ -128,7 +135,7 @@ const LoansSection = () => {
           icon={<FileText className="h-5 w-5" />}
           className="lg:col-span-2"
         >
-          <form onSubmit={handleApplyForLoanAction} className="space-y-4">
+          <form onSubmit={handleApplyForLoan} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block mb-2 font-medium">
@@ -197,10 +204,10 @@ const LoansSection = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoadingApply}
               className="w-full py-3 px-4 bg-orange-teal-gradient text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? "Göndərilir..." : "Kredit Müraciəti Et"}
+              {isLoadingApply ? "Göndərilir..." : "Kredit Müraciəti Et"}
             </button>
 
             {applyMessage && (
@@ -214,22 +221,24 @@ const LoansSection = () => {
           <div className="space-y-4">
             <button
               onClick={handleGetCurrentDebt}
-              disabled={loading}
+              disabled={isLoading}
               className="w-full py-3 px-4 bg-orange-teal-gradient text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? "Yüklənir..." : "Cari Borcu Yenilə"}
+              {isLoading ? "Yüklənir..." : "Cari Borcu Yenilə"}
             </button>
 
             {currentDebt && (
               <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-md">
                 <h3 className="font-semibold mb-2">Cari Borc Məlumatı:</h3>
-                <p>Məbləğ: {currentDebt.amount} AZN</p>
-                <p>Son ödəniş tarixi: {currentDebt.dueDate}</p>
-                <p>Status: {currentDebt.status}</p>
+                <p>Məbləğ: {currentDebt.principal} AZN</p>
+                <p>Faiz dərəcəsi: {currentDebt.interestRate}%</p>
+                <p>Kredit müddəti: {currentDebt.loanTermInMonths} ay</p>
+                <p>Ümumi borc: {currentDebt.totalDebt} AZN</p>
+                <p>Kredit məqsədi: {currentDebt.loanPurpose}</p>
               </div>
             )}
 
-            {!currentDebt && (
+            {!currentDebt && !isLoading && (
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-md">
                 <p className="text-green-600">✅ Aktiv borcunuz yoxdur</p>
               </div>
@@ -242,20 +251,19 @@ const LoansSection = () => {
           <div className="space-y-4">
             <button
               onClick={handleGetTotalDebt}
-              disabled={loading}
+              disabled={isLoading}
               className="w-full py-3 px-4 bg-orange-teal-gradient text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? "Yüklənir..." : "Ümumi Borcu Yenilə"}
+              {isLoading ? "Yüklənir..." : "Ümumi Borcu Yenilə"}
             </button>
 
             {totalDebt && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-md">
                 <h3 className="font-semibold mb-2">Ümumi Borc Məlumatı:</h3>
                 <p className="text-lg font-bold">
-                  Ümumi borc: {totalDebt.totalAmount} AZN
+                  Ümumi borc: {totalDebt.totalDebt} AZN
                 </p>
-                <p>Aktiv kreditlər: {totalDebt.activeLoans}</p>
-                <p>Aylıq ödəniş: {totalDebt.monthlyPayment} AZN</p>
+                <p>Aktiv kreditlərin sayı: {totalDebt.loanCount}</p>
               </div>
             )}
           </div>
@@ -269,11 +277,11 @@ const LoansSection = () => {
         >
           <div className="space-y-4">
             <button
-              onClick={handleGetLoanHistoryAction}
-              disabled={loading}
+              onClick={handleGetLoanHistory}
+              disabled={isLoading}
               className="py-2 px-4 bg-orange-teal-gradient text-white rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {loading ? "Yüklənir..." : "Tarixçəni Yenilə"}
+              {isLoading ? "Yüklənir..." : "Tarixçəni Yenilə"}
             </button>
 
             {loanHistory.length > 0 ? (
@@ -281,39 +289,38 @@ const LoansSection = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-surface-hover">
+                      <th className="text-left py-3 px-4">İban</th>
                       <th className="text-left py-3 px-4">Tarix</th>
                       <th className="text-left py-3 px-4">Məbləğ</th>
+                      <th className="text-left py-3 px-4">Faiz dərəcəsi</th>
                       <th className="text-left py-3 px-4">Müddət</th>
                       <th className="text-left py-3 px-4">Məqsəd</th>
-                      <th className="text-left py-3 px-4">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {loanHistory.map((loan, index) => (
-                      <tr key={index} className="border-b border-surface-hover">
-                        <td className="py-3 px-4">{loan.date}</td>
-                        <td className="py-3 px-4">{loan.amount} AZN</td>
-                        <td className="py-3 px-4">{loan.termInMonths} ay</td>
-                        <td className="py-3 px-4">{loan.purpose}</td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              loan.status === "approved"
-                                ? "bg-green-500/10 text-green-500"
-                                : loan.status === "pending"
-                                ? "bg-yellow-500/10 text-yellow-500"
-                                : "bg-red-500/10 text-red-500"
-                            }`}
-                          >
-                            {loan.status === "approved"
-                              ? "Təsdiqləndi"
-                              : loan.status === "pending"
-                              ? "Gözləyir"
-                              : "Rədd edildi"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {loanHistory
+                      .slice()
+                      .sort(
+                        (a, b) =>
+                          new Date(b.operationDate) - new Date(a.operationDate)
+                      )
+                      .map((loan) => (
+                        <tr
+                          key={loan.loanId}
+                          className="border-b border-surface-hover"
+                        >
+                          <td className="py-3 px-4">{loan.iban}</td>
+                          <td className="py-3 px-4">
+                            {formatDate(loan.operationDate)}
+                          </td>
+                          <td className="py-3 px-4">{loan.amount} AZN</td>
+                          <td className="py-3 px-4">{loan.interestRate}%</td>
+                          <td className="py-3 px-4">
+                            {loan.loanTermInMonths} ay
+                          </td>
+                          <td className="py-3 px-4">{loan.loanPurpose}</td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>

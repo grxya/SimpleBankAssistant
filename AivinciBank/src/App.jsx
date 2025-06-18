@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -26,17 +26,44 @@ import Register from "./pages/Register";
 import { ThemeProvider } from "./components/ThemeContext";
 
 import UserPanel from "./pages/UserPanel";
+import NotFound from "./pages/NotFound";
+import ForgotPassword from "./pages/ForgotPassword";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import { useAuth, useAuthState } from "./store/hooks/useAuthHook";
+import Loader from "./components/Loader";
+import AdminPanel from "./pages/AdminPanel";
 
 function AppContent() {
   const location = useLocation();
   const [customerType, setCustomerType] = useState("fiziki");
 
-  // Bu route-larda Header/Footer və s. göstərilməyəcək
-  const hideLayoutRoutes = ["/user"];
+  const { GetUserInfo } = useAuth();
+  const authState = useAuthState();
+
+  useEffect(() => {
+    const fetch = async () => {
+      if (authState.isLoggedIn) {
+        await GetUserInfo();
+      }
+    };
+    fetch();
+  }, [authState.isLoggedIn, GetUserInfo]);
+
+  const hideLayoutRoutes = ["/user", "/admin"];
+  // const hideLayoutRoutes = ["/user"];
+
   const hideLayout = hideLayoutRoutes.includes(location.pathname);
 
-  const hideChatbotRoutes = ["/register", "/login"];
+  const hideChatbotRoutes = ["/register", "/login", "/admin"];
+  // const hideChatbotRoutes = ["/register", "/login"];
+
   const hideChatbot = hideChatbotRoutes.includes(location.pathname);
+
+  if (authState.isUserFetching) {
+    return <Loader />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -72,8 +99,31 @@ function AppContent() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/user" element={<UserPanel />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        <Route
+          path="/user"
+          element={
+            <ProtectedRoute allowedRoles={["USER"]}>
+              <UserPanel />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        /> */}
+
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/404" element={<NotFound />} />
       </Routes>
 
       {!hideLayout && <Footer />}

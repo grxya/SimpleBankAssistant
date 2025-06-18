@@ -1,20 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail, ArrowRight } from "lucide-react";
-import { useAuth } from "../store/hooks/useAuthHook";
+import { useAuth, useAuthState } from "../store/hooks/useAuthHook";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [error, setError] = useState("");
 
   const { Login } = useAuth();
+  const isLoading = useAuthState().isLoading;
 
   const validateForm = () => {
     const newErrors = {};
@@ -25,11 +24,11 @@ const Login = () => {
       newErrors.email = "Düzgün e-poçt ünvanı daxil edin";
     }
 
-    if (!password) {
-      newErrors.password = "Şifrə tələb olunur";
-    } else if (password.length < 6) {
-      newErrors.password = "Şifrə ən azı 6 simvol olmalıdır";
-    }
+    // if (!password) {
+    //   newErrors.password = "Şifrə tələb olunur";
+    // } else if (password.length < 6) {
+    //   newErrors.password = "Şifrə ən azı 6 simvol olmalıdır";
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -39,13 +38,14 @@ const Login = () => {
     e.preventDefault();
 
     if (validateForm()) {
-      setIsLoading(true);
       try {
-        await Login({ email, password });
+        const response = await Login({ email, password });
+
+        if (response.type == "auth/login/rejected") {
+          setError(response.payload);
+        }
       } catch (error) {
         console.error("Login error:", error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -60,14 +60,19 @@ const Login = () => {
 
       <div className="w-full max-w-md mt-20 relative z-10">
         <div className=" rounded-md p-8 shadow-lg border border-surface-hover">
-          <div className="text-center mb-10">
+          <div className="text-center mb-6">
             <div className="flex justify-center mb-6"></div>
             <h1 className="text-2xl font-bold mb-3 display-font ">
               Aivinci Bank-a xoş gəlmisiniz
             </h1>
             <p className="text-muted">Hesabınıza daxil olun</p>
           </div>
-
+          {/* Error message below the form */}
+          {error && (
+            <div className="mb-6 p-4 rounded-md bg-red-100 text-red-800 border border-red-200 text-sm">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
               <label htmlFor="email" className="block text-sm font-medium mb-2">
@@ -131,51 +136,13 @@ const Login = () => {
               )}
             </div>
 
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center">
-                <div className="relative">
-                  <input
-                    id="remember-me"
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={() => setRememberMe(!rememberMe)}
-                    className="sr-only"
-                  />
-                  <div
-                    className={`w-5 h-5 rounded-md border ${
-                      rememberMe
-                        ? "bg-lime-500 border-primary"
-                        : "border-muted bg-surface-hover"
-                    } flex items-center justify-center transition-all cursor-pointer`}
-                    onClick={() => setRememberMe(!rememberMe)}
-                  >
-                    {rememberMe && (
-                      <svg
-                        xmlns="http:www.w3.org/2000/svg"
-                        className="h-3 w-3 text-white"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm cursor-pointer"
-                >
-                  Məni xatırla
-                </label>
-              </div>
-
-              <a href="#" className="text-sm text-lime-500 hover:underline">
+            <div className="flex justify-end mb-8">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-lime-500 hover:underline"
+              >
                 Şifrəni unutmusunuz?
-              </a>
+              </Link>
             </div>
 
             <button

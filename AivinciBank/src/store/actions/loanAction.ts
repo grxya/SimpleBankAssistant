@@ -8,37 +8,13 @@ export const ApplyForLoanAction = createAsyncThunk(
     "loans/apply",
     async (LoanDTO: LoanDTO, { rejectWithValue }) => {
       try {
-        const token = localStorage.getItem("accessToken");
-
         const response = await ApiManager.apiRequest({
           Url: `${baseUrl}/apply`,
           Method: "POST",
           Headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           Data: LoanDTO,
-        });
-        return response;
-      } catch (error: any) {
-        return rejectWithValue(error);
-      }
-    }
-  );
-
-export const GetLoanDebtAction = createAsyncThunk(
-    "loans/debt",
-    async (_, { rejectWithValue }) => {
-      try {
-        const token = localStorage.getItem("accessToken");
-
-        const response = await ApiManager.apiRequest({
-          Url: `${baseUrl}/debt`,
-          Method: "GET",
-          Headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
         });
         return response;
       } catch (error: any) {
@@ -51,14 +27,11 @@ export const GetLoanDebtAction = createAsyncThunk(
     "loans/total-debt",
     async (_, { rejectWithValue }) => {
       try {
-        const token = localStorage.getItem("accessToken");
-
         const response = await ApiManager.apiRequest({
           Url: `${baseUrl}/total-debt`,
           Method: "GET",
           Headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
         });
         return response;
@@ -72,14 +45,29 @@ export const GetLoanDebtAction = createAsyncThunk(
     "loans/history",
     async (_, { rejectWithValue }) => {
       try {
-        const token = localStorage.getItem("accessToken");
-
         const response = await ApiManager.apiRequest({
           Url: `${baseUrl}/history`,
           Method: "GET",
           Headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+          },
+        });
+        return response;
+      } catch (error: any) {
+        return rejectWithValue(error);
+      }
+    }
+  );
+
+  export const GetLoanDebtAction = createAsyncThunk(
+    "loans/debt",
+    async (_, { rejectWithValue }) => {
+      try {
+        const response = await ApiManager.apiRequest({
+          Url: `${baseUrl}/debt`,
+          Method: "GET",
+          Headers: {
+            "Content-Type": "application/json",
           },
         });
         return response;

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { GetAllUsersAction } from "../actions/userAction";
+import { GetAllUsersAction, GetUserAction } from "../actions/userAction";
 
 const initialState: any = {
   users: [],
@@ -9,7 +9,11 @@ const initialState: any = {
 const userSlice = createSlice({
   name: "user",
   initialState,
-  reducers: {},
+  reducers: {
+    setIsLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(GetAllUsersAction.pending, (state) => {
@@ -23,9 +27,22 @@ const userSlice = createSlice({
 
         state.users = action.payload.map((user: any) => ({
           id: user.id,
-          fullname: user.username || "",
+          fullname: user.fullname || "",
           email: user.email || "",
+          enabled: user.enabled || false,
+          role: user.role || "",
         }));
+      })
+      .addCase(GetUserAction.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(GetUserAction.rejected, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(GetUserAction.fulfilled, (state) => {
+        state.isLoading = false;
       });
   },
 });
+export const { setIsLoading } = userSlice.actions;
+export default userSlice.reducer;

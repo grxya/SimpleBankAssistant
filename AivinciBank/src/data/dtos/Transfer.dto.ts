@@ -5,5 +5,6 @@ export interface TransferDTO {
 }
 
 export interface OtpVerifyTransferDTO {
-    code: string;
-  }
+  email: string;
+  code: string;
+}

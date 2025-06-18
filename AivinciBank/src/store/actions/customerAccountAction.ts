@@ -12,15 +12,11 @@ export const CreateAccountAction = createAsyncThunk(
   "accounts/create",
   async (CustomerAccountDTO: CustomerAccountDTO, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      console.log(token);
-
       const response = await ApiManager.apiRequest({
-        Url: `${baseUrl}/`,
+        Url: `${baseUrl}`,
         Method: "POST",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         Data: CustomerAccountDTO,
       });
@@ -38,14 +34,11 @@ export const UpdateBalanceAction = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/${data.accountId}/balance`,
         Method: "PUT",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         Data: data.BalanceUpdateDTO,
       });
@@ -60,14 +53,11 @@ export const GetBalanceAction = createAsyncThunk(
   "accounts/getBalance",
   async (accountId: string, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/${accountId}/balance`,
         Method: "GET",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
       return response;
@@ -81,14 +71,11 @@ export const CloseAccountAction = createAsyncThunk(
   "accounts/closeAccount",
   async (accountId: string, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/${accountId}`,
         Method: "DELETE",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
       return response;
@@ -105,16 +92,31 @@ export const ConvertCurrencyAction = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/${data.accountId}/convert`,
         Method: "PUT",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         Data: data.CurrencyConversionDTO,
+      });
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+export const GetIbansAction = createAsyncThunk(
+  "accounts/my-ibans",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await ApiManager.apiRequest({
+        Url: `${baseUrl}/my-ibans`,
+        Method: "GET",
+        Headers: {
+          "Content-Type": "application/json",
+        },
       });
       return response;
     } catch (error: any) {

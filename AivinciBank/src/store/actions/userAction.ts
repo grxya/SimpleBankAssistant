@@ -8,14 +8,11 @@ export const GetAllUsersAction = createAsyncThunk(
   "users/all",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
-        Url: `${baseUrl}/`,
+        Url: `${baseUrl}`,
         Method: "GET",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
       return response;
@@ -29,14 +26,11 @@ export const CreateUserAction = createAsyncThunk(
   "users/create",
   async (NewUser: User, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
-        Url: `${baseUrl}/`,
+        Url: `${baseUrl}`,
         Method: "POST",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         Data: NewUser,
       });
@@ -51,14 +45,11 @@ export const GetUserAction = createAsyncThunk(
   "users/one",
   async (userId: string, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/${userId}`,
         Method: "GET",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
       return response;
@@ -72,16 +63,32 @@ export const UpdateUserAction = createAsyncThunk(
   "users/update",
   async (data: { userId: string; NewUser: User }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/${data.userId}`,
         Method: "PUT",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         Data: data.NewUser,
+      });
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
+export const UpdateUserRoleAction = createAsyncThunk(
+  "users/role",
+  async (data: { userId: string; role: string }, { rejectWithValue }) => {
+    try {
+      const response = await ApiManager.apiRequest({
+        Url: `${baseUrl}/${data.userId}/role`,
+        Method: "PUT",
+        Headers: {
+          "Content-Type": "application/json",
+        },
+        Data: data.role,
       });
       return response;
     } catch (error: any) {
@@ -94,14 +101,11 @@ export const DeleteUserAction = createAsyncThunk(
   "users/delete",
   async (userId: string, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-
       const response = await ApiManager.apiRequest({
         Url: `${baseUrl}/${userId}`,
         Method: "DELETE",
         Headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
       return response;

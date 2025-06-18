@@ -9,11 +9,6 @@ export interface LoginDTO {
   password: string;
 }
 
-export interface RefreshDTO {
-  userId: string;
-  refreshToken: string;
-}
-
 export interface OtpSendDTO {
   email: string;
 }
@@ -21,4 +16,10 @@ export interface OtpSendDTO {
 export interface OtpVerifyDTO {
   email: string;
   code: string;
+}
+
+export interface ResetPasswordDTO {
+  email: string;
+  code: string;
+  newPassword: string;
 }

@@ -12,7 +12,7 @@ import {
   Check,
   Shield,
 } from "lucide-react";
-import { useAuth } from "../store/hooks/useAuthHook";
+import { useAuth, useAuthState } from "../store/hooks/useAuthHook";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -26,13 +26,14 @@ const Register = () => {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [errors, setErrors] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [otpError, setOtpError] = useState("");
   const [resendTimer, setResendTimer] = useState(0);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const { Register, OtpSend, OtpVerify } = useAuth();
+  const isLoading = useAuthState().isLoading;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,7 +94,7 @@ const Register = () => {
   };
 
   const startResendTimer = () => {
-    setResendTimer(60*5);
+    setResendTimer(60);
     const timer = setInterval(() => {
       setResendTimer((prev) => {
         if (prev <= 1) {
@@ -107,6 +108,7 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
     if (currentStep === 1) {
       nextStep();
@@ -115,19 +117,18 @@ const Register = () => {
 
     if (currentStep === 2) {
       if (validateStep2()) {
-        setIsLoading(true);
         try {
           const { fullname, email, password } = formData;
-          const result = await Register({ fullname, email, password });
-          if (result) {
-            setCurrentStep(3);
+          const response = await Register({ fullname, email, password });
+
+          if (response.type == "auth/register/rejected") {
+            setError(response.payload);
+          } else {
             startResendTimer();
-            await OtpSend({ email });
+            setCurrentStep(3);
           }
         } catch (error) {
           console.error("Registration error:", error);
-        } finally {
-          setIsLoading(false);
         }
       }
       return;
@@ -138,40 +139,38 @@ const Register = () => {
         setOtpError("6 rəqəmli OTP kodu daxil edin");
         return;
       }
-
-      setIsLoading(true);
       try {
-        const result = await OtpVerify({
+        const response = await OtpVerify({
           email: formData.email,
           code: otpCode,
         });
-        if (result) {
-          // Store username in localStorage
+
+        if (response.type === "auth/verify-otp/rejected") {
+          setOtpError("Yanlış OTP kodu. Yenidən cəhd edin.");
+        } else {
           localStorage.setItem("username", formData.fullname);
           navigate("/login");
         }
       } catch (error) {
-        setOtpError("Yanlış OTP kodu. Yenidən cəhd edin.");
         console.error("OTP verification error:", error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
 
   const handleReOtpSend = async () => {
     if (resendTimer > 0) return;
-
-    setIsLoading(true);
     try {
-      await OtpSend({ email: formData.email });
-      startResendTimer();
-      setOtpError("");
+      const response = await OtpSend({ email: formData.email });
+
+      if (response.type === "auth/send-otp/rejected") {
+        setError(response.payload);
+        setOtpError("OTP göndərilmədi. Yenidən cəhd edin.");
+      } else {
+        startResendTimer();
+        setOtpError("");
+      }
     } catch (error) {
-      setOtpError("OTP göndərilmədi. Yenidən cəhd edin.");
       console.error("OTP send error:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -248,6 +247,13 @@ const Register = () => {
                 : "Qeydiyyatdan keçərək xidmətlərimizdən yararlanın"}
             </p>
           </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-6 p-4 rounded-md bg-red-100 text-red-800 border border-red-200 text-sm">
+              {error}
+            </div>
+          )}
 
           {/* Progress steps */}
           <div className="flex justify-between mb-10 relative">
@@ -522,13 +528,21 @@ const Register = () => {
                         className={errors.agreeTerms ? "text-red-500" : ""}
                       >
                         Mən{" "}
-                        <a href="#" className="text-lime-500 hover:underline">
+                        <Link
+                          to="/terms"
+                          target="_blank"
+                          className="text-lime-500 hover:underline"
+                        >
                           İstifadə şərtləri
-                        </a>{" "}
+                        </Link>{" "}
                         və{" "}
-                        <a href="#" className="text-lime-500 hover:underline">
+                        <Link
+                          to="/privacy"
+                          target="_blank"
+                          className="text-lime-500 hover:underline"
+                        >
                           Məxfilik siyasəti
-                        </a>{" "}
+                        </Link>{" "}
                         ilə razıyam
                       </label>
                     </div>

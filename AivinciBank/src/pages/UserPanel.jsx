@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -22,25 +22,11 @@ import Sidebar from "../components/Sidebar";
 import Card from "../components/Card";
 import Modal from "../components/Modal";
 import TransferForm from "../components/TransferForm";
-import UpdateInfo from "../components/UpdateInfo";
 import AccountsSection from "../components/AccountsSection";
 import LoansSection from "../components/LoansSection";
 import HistorySection from "../components/HistorySection";
-
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+import { useAuthState, useAuth } from "../store/hooks/useAuthHook";
+import { useHistory } from "../store/hooks/useHistoryHook";
 
 const data = [
   { name: "January", income: 1200, expense: 800 },
@@ -59,23 +45,144 @@ const data = [
 
 const UserPanel = () => {
   const [selectedSection, setSelectedSection] = useState("info");
-  const [selectedCard, setSelectedCard] = useState("1");
-  const [selectedMonth, setSelectedMonth] = useState("January");
-  const [selectedYear, setSelectedYear] = useState("2025");
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [loanHistory, setLoanHistory] = useState([]);
+  const [transferHistory, setTransferHistory] = useState([]);
+  const [incomeHistory, setIncomeHistory] = useState([]);
+
+  const authState = useAuthState();
+
   const [name, setName] = useState(() => {
-    return localStorage.getItem("username") || "İstifadəçi";
+    return authState.user.fullname || "İstifadəçi";
   });
 
   const navigate = useNavigate();
   const { darkMode } = useTheme();
 
+  const { SignOut } = useAuth();
+  const { GetTransferHistory, GetIncomeHistory, GetLoanHistory } = useHistory();
+
   const handleSignOut = () => {
-    console.log("Signed out.");
-    setShowSignOutModal(false);
-    localStorage.removeItem("username");
+    SignOut();
     navigate("/");
   };
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const result = await GetLoanHistory();
+        setLoanHistory(result.payload || []);
+
+        const transferResult = await GetTransferHistory();
+        const incomeResult = await GetIncomeHistory();
+        setTransferHistory(transferResult.payload || []);
+        setIncomeHistory(incomeResult.payload || []);
+      } catch (err) {
+        console.error("Xəta baş verdi:", err);
+      }
+    };
+
+    fetchAccounts();
+  }, []);
+
+  const buildChartData = () => {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const getMonth = (timestamp) =>
+      new Date(timestamp).toLocaleString("default", { month: "long" });
+
+    const monthlyData = {};
+    months.forEach((month) => {
+      monthlyData[month] = { name: month, income: 0, expense: 0 };
+    });
+
+    const allIncomes = [
+      ...(incomeHistory.incomingTransfers || []),
+      ...(incomeHistory.balanceIncomes || []),
+    ];
+
+    const allExpenses = [...(transferHistory || [])];
+
+    allIncomes.forEach((entry) => {
+      const timestamp = entry.transferDate || entry.operationDate;
+      const isSuccessful = entry.isSuccessful ?? true;
+      const amount = entry.amount;
+
+      if (!timestamp || !isSuccessful || !amount) return;
+
+      const month = getMonth(timestamp);
+      if (monthlyData[month]) {
+        monthlyData[month].income += amount;
+      }
+    });
+
+    allExpenses.forEach((entry) => {
+      const timestamp = entry.transferDate;
+      const isSuccessful = entry.isSuccessful ?? true;
+      const amount = entry.amount;
+
+      if (!timestamp || !isSuccessful || !amount) return;
+
+      const month = getMonth(timestamp);
+      if (monthlyData[month]) {
+        monthlyData[month].expense += amount;
+      }
+    });
+
+    return Object.values(monthlyData);
+  };
+
+  const pieData = loanHistory.reduce((acc, loan) => {
+    const existing = acc.find((item) => item.name === loan.loanPurpose);
+    if (existing) {
+      existing.value += loan.amount;
+    } else {
+      acc.push({ name: loan.loanPurpose, value: loan.amount });
+    }
+    return acc;
+  }, []);
+
+  const transactions = [
+    ...(transferHistory || []).map((t) => ({
+      date: new Date(t.transferDate).toLocaleString(),
+      iban: t.senderIban,
+      description: "Transfer",
+      amount: `-${t.amount}`,
+      currency: t.currency ?? "AZN",
+      isIncome: false,
+    })),
+
+    ...(incomeHistory?.incomingTransfers || []).map((t) => ({
+      date: new Date(t.transferDate).toLocaleString(),
+      iban: t.receiverIban,
+      description: "Gəlir",
+      amount: `+${t.amount}`,
+      currency: t.currency ?? "AZN",
+      isIncome: true,
+    })),
+
+    ...(incomeHistory?.balanceIncomes || []).map((b) => ({
+      date: new Date(b.operationDate).toLocaleString(),
+      iban: b.iban,
+      description: "Balans artırma",
+      amount: `+${b.amount}`,
+      currency: b.currency,
+      isIncome: true,
+    })),
+  ];
 
   const renderContent = () => {
     switch (selectedSection) {
@@ -87,8 +194,6 @@ const UserPanel = () => {
         return <LoansSection />;
       case "history":
         return <HistorySection />;
-      case "update":
-        return <UpdateInfo />;
       default:
         return (
           <>
@@ -101,36 +206,6 @@ const UserPanel = () => {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-4 mb-8">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="p-3 text-black rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-lime-500 transition-colors"
-              >
-                {months.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className="p-3 text-black rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-lime-500 transition-colors"
-              >
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-              </select>
-              <select
-                value={selectedCard}
-                onChange={(e) => setSelectedCard(e.target.value)}
-                className="p-3 text-black rounded-md bg-surface-hover border border-surface-hover focus:outline-none focus:border-lime-500 transition-colors"
-              >
-                <option value="1">1111-2222-3333-4444</option>
-                <option value="2">5555-6666-7777-8888</option>
-              </select>
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card
                 title="Gəlir və xərclər"
@@ -138,7 +213,7 @@ const UserPanel = () => {
               >
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data}>
+                    <LineChart data={buildChartData()}>
                       <CartesianGrid
                         strokeDasharray="3 3"
                         stroke={darkMode ? "#333" : "#eee"}
@@ -177,19 +252,14 @@ const UserPanel = () => {
               </Card>
 
               <Card
-                title="Xərc kateqoriyaları"
+                title="Kredit kateqoriyaları"
                 icon={<ChartLineUp className="h-5 w-5" />}
               >
                 <div className="h-[300px] flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={[
-                          { name: "Ərzaq", value: 400 },
-                          { name: "Kommunal", value: 300 },
-                          { name: "Nəqliyyat", value: 200 },
-                          { name: "Əyləncə", value: 150 },
-                        ]}
+                        data={pieData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -203,11 +273,7 @@ const UserPanel = () => {
                         {data.map((entry, index) => (
                           <Cell
                             key={`cell-${index}`}
-                            fill={
-                              ["#65a30d", "#f97316", "#3b82f6", "#8b5cf6"][
-                                index % 4
-                              ]
-                            }
+                            fill={`hsl(${(index * 110) % 360}, 60%, 60%)`}
                           />
                         ))}
                       </Pie>
@@ -232,64 +298,31 @@ const UserPanel = () => {
                     <thead>
                       <tr className="border-b border-surface-hover">
                         <th className="text-left py-3 px-4">Tarix</th>
-                        <th className="text-left py-3 px-4">Təsvir</th>
+                        <th className="text-left py-3 px-4">Iban</th>
+                        <th className="text-left py-3 px-4">Növ</th>
                         <th className="text-left py-3 px-4">Məbləğ</th>
-                        <th className="text-left py-3 px-4">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="border-b border-surface-hover">
-                        <td className="py-3 px-4">2025-06-01</td>
-                        <td className="py-3 px-4">Market alış-verişi</td>
-                        <td className="py-3 px-4 text-red-500">-45.00 AZN</td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-500">
-                            Tamamlandı
-                          </span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-surface-hover">
-                        <td className="py-3 px-4">2025-06-01</td>
-                        <td className="py-3 px-4">Maaş</td>
-                        <td className="py-3 px-4 text-green-500">
-                          +1200.00 AZN
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-500">
-                            Tamamlandı
-                          </span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-surface-hover">
-                        <td className="py-3 px-4">2025-05-29</td>
-                        <td className="py-3 px-4">Kommunal ödəniş</td>
-                        <td className="py-3 px-4 text-red-500">-85.50 AZN</td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-500">
-                            Tamamlandı
-                          </span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-surface-hover">
-                        <td className="py-3 px-4">2025-05-28</td>
-                        <td className="py-3 px-4">Restoran</td>
-                        <td className="py-3 px-4 text-red-500">-32.40 AZN</td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-500">
-                            Tamamlandı
-                          </span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="py-3 px-4">2025-05-27</td>
-                        <td className="py-3 px-4">Yanacaq</td>
-                        <td className="py-3 px-4 text-red-500">-50.00 AZN</td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-1 rounded-full text-xs bg-green-500/10 text-green-500">
-                            Tamamlandı
-                          </span>
-                        </td>
-                      </tr>
+                      {transactions
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .map((tx, idx) => (
+                          <tr
+                            key={idx}
+                            className="border-b border-surface-hover"
+                          >
+                            <td className="py-3 px-4">{tx.date}</td>
+                            <td className="py-3 px-4">{tx.iban}</td>
+                            <td className="py-3 px-4">{tx.description}</td>
+                            <td
+                              className={`py-3 px-4 ${
+                                tx.isIncome ? "text-green-500" : "text-red-500"
+                              }`}
+                            >
+                              {tx.amount} {tx.currency}
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>

@@ -1,15 +1,19 @@
 "use client";
 
+import { useAuthState } from "../store/hooks/useAuthHook";
 import { useTheme } from "./ThemeContext";
 
 import { useRef, useEffect, useState } from "react";
 
 const CardOrder = () => {
   const { darkMode } = useTheme();
+  const { user } = useAuthState();
 
-  const [username, setUsername] = useState(() => {
-    return localStorage.getItem("username") || null;
-  });
+  const [username, setUsername] = useState("Adınız Soyadınız");
+
+  useEffect(() => {
+    setUsername(user.fullname || "Adınız Soyadınız");
+  }, [user.fullname]);
 
   const sectionRef = useRef(null);
   const cardRef = useRef(null);
@@ -507,7 +511,7 @@ const CardOrder = () => {
                             Card Holder
                           </div>
                           <div className="text-white font-medium text-sm truncate">
-                            {username ? username : "Adınız Soyadınız"}
+                            {username}
                           </div>
                         </div>
                         <div>
@@ -592,7 +596,7 @@ const CardOrder = () => {
                             <div className="bg-white/90 h-10 flex items-center px-3 mb-2 rounded-md">
                               <div className="w-full overflow-hidden">
                                 <div className="font-mono text-black/50 text-sm italic overflow-hidden whitespace-nowrap">
-                                  {username ? username : "Adınız Soyadınız"}
+                                  {username}
                                 </div>
                               </div>
                               <div className="ml-auto font-mono text-black font-bold">

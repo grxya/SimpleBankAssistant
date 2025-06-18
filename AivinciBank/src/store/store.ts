@@ -5,6 +5,7 @@ import customerAccountReducer from "../store/slices/customerAccountSlice";
 import moneyTransferReducer from "../store/slices/moneyTransferSlice";
 import historyReducer from "../store/slices/historySlice";
 import loanReducer from "../store/slices/loanSlice";
+import userReducer from "../store/slices/userSlice";
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     moneyTransfer: moneyTransferReducer,
     history: historyReducer,
     loan: loanReducer,
+    user: userReducer,
   },
 });
 
