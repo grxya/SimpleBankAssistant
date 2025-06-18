@@ -18,7 +18,7 @@ const initialState: AuthData = {
     fullname: "",
     email: "",
     enabled: false,
-    role: "user",
+    role: "USER",
   },
 };
 
@@ -118,7 +118,7 @@ const authSlice = createSlice({
           fullname: action.payload.fullname || "",
           email: action.payload.email || "",
           enabled: action.payload.enabled || false,
-          role: action.payload.role || "",
+          role: (action.payload.role || "").toUpperCase(),
         };
 
         localStorage.setItem("userId", state.user.id);

@@ -1,7 +1,7 @@
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../store";
 import { AskAction } from "../actions/chatBotAction";
-import { ChatbotRequestDTO } from "../../data/dtos/ChatBot.dto";
+import { ChatbotRequestDTO } from "../../data/dtos/Chatbot.dto";
 
 export const useChatBot = () => {
   const dispatch = useDispatch<AppDispatch>();

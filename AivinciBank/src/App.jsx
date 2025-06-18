@@ -7,6 +7,7 @@ import {
   Route,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
@@ -38,18 +39,31 @@ import AdminPanel from "./pages/AdminPanel";
 function AppContent() {
   const location = useLocation();
   const [customerType, setCustomerType] = useState("fiziki");
+  const navigate = useNavigate();
 
   const { GetUserInfo } = useAuth();
-  const authState = useAuthState();
+  const { isUserFetching, user, isLoggedIn } = useAuthState();
 
   useEffect(() => {
     const fetch = async () => {
-      if (authState.isLoggedIn) {
+      if (isLoggedIn) {
         await GetUserInfo();
       }
     };
     fetch();
-  }, [authState.isLoggedIn, GetUserInfo]);
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === "ADMIN") {
+        navigate("/admin");
+      } else if (user.role === "USER") {
+        navigate("/user");
+      } else {
+        navigate("/404");
+      }
+    }
+  }, [user]);
 
   const hideLayoutRoutes = ["/user", "/admin"];
   // const hideLayoutRoutes = ["/user"];
@@ -61,7 +75,7 @@ function AppContent() {
 
   const hideChatbot = hideChatbotRoutes.includes(location.pathname);
 
-  if (authState.isUserFetching) {
+  if (isUserFetching) {
     return <Loader />;
   }
 

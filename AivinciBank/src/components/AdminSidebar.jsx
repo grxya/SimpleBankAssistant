@@ -1,30 +1,15 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useTheme } from "../components/ThemeContext";
-import {
-  LogOut,
-  Menu,
-  Sun,
-  Moon,
-  ChevronRight,
-  BarChart3,
-  Home,
-  Shield,
-} from "lucide-react";
+import { useState } from "react"
+import { Link } from "react-router-dom"
+import { useTheme } from "../components/ThemeContext"
+import { LogOut, Menu, Sun, Moon, ChevronRight, BarChart3, Home, Shield } from "lucide-react"
 
 const AdminSidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
-  const { darkMode, toggleDarkMode } = useTheme();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const menuItems = [
-    {
-      id: "dashboard",
-      label: "Panel",
-      icon: <BarChart3 className="h-5 w-5" />,
-    },
-  ];
+  const menuItems = [{ id: "dashboard", label: "Panel", icon: <BarChart3 className="h-5 w-5" /> }]
 
   return (
     <>
@@ -56,11 +41,7 @@ const AdminSidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
             aria-label="Toggle Theme"
           >
-            {darkMode ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
+            {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
         </div>
 
@@ -78,8 +59,8 @@ const AdminSidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
             <button
               key={item.id}
               onClick={() => {
-                onSelectSection(item.id);
-                setIsMobileMenuOpen(false);
+                onSelectSection(item.id)
+                setIsMobileMenuOpen(false)
               }}
               className={`flex items-center gap-3 py-3 px-4 rounded-md transition-colors text-left ${
                 activeSection === item.id
@@ -89,9 +70,7 @@ const AdminSidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
             >
               {item.icon}
               <span>{item.label}</span>
-              {activeSection === item.id && (
-                <ChevronRight className="h-4 w-4 ml-auto" />
-              )}
+              {activeSection === item.id && <ChevronRight className="h-4 w-4 ml-auto" />}
             </button>
           ))}
 
@@ -99,8 +78,8 @@ const AdminSidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
 
           <button
             onClick={() => {
-              onSignOutClick();
-              setIsMobileMenuOpen(false);
+              onSignOutClick()
+              setIsMobileMenuOpen(false)
             }}
             className="flex items-center gap-3 py-3 px-4 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
           >
@@ -118,8 +97,7 @@ const AdminSidebar = ({ onSelectSection, onSignOutClick, activeSection }) => {
         ></div>
       )}
     </>
-  );
-};
+  )
+}
 
-export default AdminSidebar;
-
+export default AdminSidebar

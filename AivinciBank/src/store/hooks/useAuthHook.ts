@@ -28,7 +28,7 @@ export const useAuth = () => {
     const result = await dispatch(LoginUserAction(loginData));
     console.log(result);
     if (result.meta.requestStatus === "fulfilled") {
-      navigate("/admin");
+      navigate("/");
     }
     return result;
   };

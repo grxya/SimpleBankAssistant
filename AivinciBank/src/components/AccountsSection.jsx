@@ -56,7 +56,7 @@ const AccountsSection = () => {
     };
 
     fetchAccounts();
-  }, [refreshIbansFlag, GetIbans]);
+  }, [refreshIbansFlag]);
 
   const handleCreateAccount = async (e) => {
     e.preventDefault();

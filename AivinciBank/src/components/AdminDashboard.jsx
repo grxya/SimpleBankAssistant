@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Trash2, Filter, RefreshCw, Edit, X } from "lucide-react";
+import {
+  Search,
+  Trash2,
+  Filter,
+  RefreshCw,
+  Edit,
+  X,
+} from "lucide-react";
 import { useUser, useUserState } from "../store/hooks/useUserHook";
 import { Users, ShieldIcon as ShieldUser, UserRoundCheck } from "lucide-react";
 
@@ -32,12 +39,12 @@ const AdminDashboard = () => {
 
   const { users, isLoading } = useUserState();
 
-  const { GetAllUsers, DeleteUser, UpdateUserRole } = useUser();
+  const { GetAllUsers, DeleteUser, UpdateUserRole, CreateUser } = useUser();
 
   useEffect(() => {
     const fetch = async () => await GetAllUsers();
     fetch();
-  }, [refreshFlag, GetAllUsers]);
+  }, [refreshFlag]);
 
   useEffect(() => {
     const filtered = users.filter(
@@ -716,8 +723,8 @@ const AdminDashboard = () => {
               İstifadəçini Sil
             </h3>
             <p className="text-gray-600 mb-6">
-              `&quot;`{userToDelete?.fullname}`&quot;` istifadəçisini silmək
-              istədiyinizə əminsiniz? Bu əməliyyat geri alına bilməz.
+              "{userToDelete?.fullname}" istifadəçisini silmək istədiyinizə
+              əminsiniz? Bu əməliyyat geri alına bilməz.
             </p>
             <div className="flex justify-end space-x-3">
               <button
