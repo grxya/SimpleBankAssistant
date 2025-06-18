@@ -124,16 +124,15 @@ function AppContent() {
           }
         />
 
-        {/* <Route
+        <Route
           path="/admin"
           element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
               <AdminPanel />
             </ProtectedRoute>
           }
-        /> */}
+        />
 
-        <Route path="/admin" element={<AdminPanel />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
