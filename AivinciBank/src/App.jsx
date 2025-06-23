@@ -56,12 +56,7 @@ function AppContent() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (
-      !isUserFetching &&
-      isLoggedIn &&
-      user &&
-      location.pathname === "/login"
-    ) {
+    if (!isUserFetching && isLoggedIn && user) {
       if (user.role === "ADMIN") {
         navigate("/admin");
       } else if (user.role === "USER") {
