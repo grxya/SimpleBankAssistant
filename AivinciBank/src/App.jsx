@@ -46,6 +46,8 @@ function AppContent() {
 
   useEffect(() => {
     const fetch = async () => {
+      const token = localStorage.getItem("access_token");
+
       if (isLoggedIn) {
         await GetUserInfo();
       }
@@ -54,16 +56,19 @@ function AppContent() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (user) {
+    if (
+      !isUserFetching &&
+      isLoggedIn &&
+      user &&
+      location.pathname === "/login"
+    ) {
       if (user.role === "ADMIN") {
         navigate("/admin");
       } else if (user.role === "USER") {
         navigate("/user");
-      } else {
-        navigate("/404");
       }
     }
-  }, [user]);
+  }, [user, isUserFetching]);
 
   const hideLayoutRoutes = ["/user", "/admin"];
   // const hideLayoutRoutes = ["/user"];
@@ -114,7 +119,6 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
         <Route
           path="/user"
           element={
@@ -123,7 +127,6 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/admin"
           element={
@@ -132,10 +135,9 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
-
-        <Route path="*" element={<Navigate to="/404" replace />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
         <Route path="/404" element={<NotFound />} />
       </Routes>
 

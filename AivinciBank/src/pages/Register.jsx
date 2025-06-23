@@ -148,7 +148,6 @@ const Register = () => {
         if (response.type === "auth/verify-otp/rejected") {
           setOtpError("Yanlış OTP kodu. Yenidən cəhd edin.");
         } else {
-          localStorage.setItem("username", formData.fullname);
           navigate("/login");
         }
       } catch (error) {

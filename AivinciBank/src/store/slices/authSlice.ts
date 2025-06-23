@@ -11,7 +11,7 @@ import {
 
 const initialState: AuthData = {
   isLoading: false,
-  isLoggedIn: localStorage.getItem("isLoggedIn") === "true",
+  isLoggedIn: false, // persist сам восстановит
   isUserFetching: false,
   user: {
     id: "",
@@ -37,22 +37,23 @@ const authSlice = createSlice({
     },
     signOut: (state) => {
       state.isLoggedIn = false;
-
       state.user = {
         id: "",
         fullname: "",
         email: "",
         enabled: false,
-        role: "user",
+        role: "USER",
       };
 
+      // Чистим токены из localStorage
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
-      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("userId");
     },
   },
   extraReducers: (builder) => {
     builder
+      // ===== LOGIN =====
       .addCase(LoginUserAction.pending, (state) => {
         state.isLoading = true;
       })
@@ -60,15 +61,17 @@ const authSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(LoginUserAction.fulfilled, (state, action: any) => {
-        localStorage.setItem("accessToken", action.payload.accessToken);
-        localStorage.setItem("refreshToken", action.payload.refreshToken);
-        localStorage.setItem("isLoggedIn", JSON.stringify("true"));
-
         state.isLoading = false;
         state.isLoggedIn = true;
-
         state.user.id = action.payload.userId;
+
+        // Сохраняем токены вручную
+        localStorage.setItem("accessToken", action.payload.accessToken);
+        localStorage.setItem("refreshToken", action.payload.refreshToken);
+        localStorage.setItem("userId", action.payload.userId);
       })
+
+      // ===== REGISTER =====
       .addCase(RegisterUserAction.pending, (state) => {
         state.isLoading = true;
       })
@@ -78,6 +81,8 @@ const authSlice = createSlice({
       .addCase(RegisterUserAction.fulfilled, (state) => {
         state.isLoading = false;
       })
+
+      // ===== OTP SEND =====
       .addCase(SendOtpAction.pending, (state) => {
         state.isLoading = true;
       })
@@ -87,6 +92,8 @@ const authSlice = createSlice({
       .addCase(SendOtpAction.fulfilled, (state) => {
         state.isLoading = false;
       })
+
+      // ===== OTP VERIFY =====
       .addCase(VerifyOtpAction.pending, (state) => {
         state.isLoading = true;
       })
@@ -96,6 +103,8 @@ const authSlice = createSlice({
       .addCase(VerifyOtpAction.fulfilled, (state) => {
         state.isLoading = false;
       })
+
+      // ===== RESET PASSWORD =====
       .addCase(ResetPasswordAction.pending, (state) => {
         state.isLoading = true;
       })
@@ -105,6 +114,8 @@ const authSlice = createSlice({
       .addCase(ResetPasswordAction.fulfilled, (state) => {
         state.isLoading = false;
       })
+
+      // ===== GET USER INFO =====
       .addCase(GetUserInfoAction.pending, (state) => {
         state.isUserFetching = true;
       })
@@ -120,12 +131,11 @@ const authSlice = createSlice({
           enabled: action.payload.enabled || false,
           role: (action.payload.role || "").toUpperCase(),
         };
-
-        localStorage.setItem("userId", state.user.id);
       });
   },
 });
 
 export const { setIsLoading, setIsLoggedIn, setIsUserFetching, signOut } =
   authSlice.actions;
+
 export default authSlice.reducer;

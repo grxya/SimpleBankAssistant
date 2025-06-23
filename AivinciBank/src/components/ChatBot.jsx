@@ -1,31 +1,30 @@
-"use client";
+"use client"
 
-import { useTheme } from "./ThemeContext";
-import { useState, useRef, useEffect } from "react";
+import { useTheme } from "./ThemeContext"
+import { useState, useRef, useEffect } from "react"
 
-import { useChatBot } from "../store/hooks/useChatBotHook";
+import { useChatBot } from "../store/hooks/useChatBotHook"
 
 const ChatBot = () => {
-  const { darkMode } = useTheme();
+  const { darkMode } = useTheme()
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState(null);
-  const [showLanguageSelector, setShowLanguageSelector] = useState(true);
-  const [messages, setMessages] = useState([]);
-  const [userInput, setuserInput] = useState("");
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-  const messagesEndRef = useRef(null);
-  const chatRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState(null)
+  const [showLanguageSelector, setShowLanguageSelector] = useState(true)
+  const [messages, setMessages] = useState([])
+  const [userInput, setuserInput] = useState("")
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false)
+  const messagesEndRef = useRef(null)
+  const chatRef = useRef(null)
 
-  const { AskBot } = useChatBot();
+  const { AskBot } = useChatBot()
 
   const languages = {
     AZE: {
       name: "Azərbaycan",
       flag: "🇦🇿",
-      welcome:
-        "Salam! Mən Aivinci Bankın AI köməkçisiyəm. Sizə necə kömək edə bilərəm?",
+      welcome: "Salam! Mən Aivinci Bankın AI köməkçisiyəm. Sizə necə kömək edə bilərəm?",
       placeholder: "Mesajınızı yazın...",
       response:
         "Təşəkkür edirəm! Sorğunuzu qəbul etdim. Sizə daha ətraflı məlumat vermək üçün bankın mütəxəssisi tezliklə sizinlə əlaqə saxlayacaq.",
@@ -46,131 +45,110 @@ const ChatBot = () => {
       response:
         "Thank you! I have received your request. A bank specialist will contact you shortly to provide detailed information.",
     },
-  };
+  }
 
   const toggleChat = () => {
-    setIsOpen(!isOpen);
-  };
+    setIsOpen(!isOpen)
+  }
 
   const selectLanguage = (lang) => {
-    setSelectedLanguage(lang);
-    setShowLanguageSelector(false);
+    setSelectedLanguage(lang)
+    setShowLanguageSelector(false)
     setMessages([
       {
         id: 1,
         text: languages[lang].welcome,
         isBot: true,
       },
-    ]);
-  };
+    ])
+  }
 
   const changeLanguage = (lang) => {
-    setSelectedLanguage(lang);
-    setShowLanguageDropdown(false);
+    setSelectedLanguage(lang)
+    setShowLanguageDropdown(false)
     // Add a system message about language change
     const languageChangeMessage = {
       id: messages.length + 1,
       text: languages[lang].welcome,
       isBot: true,
-    };
-    setMessages((prev) => [...prev, languageChangeMessage]);
-  };
+    }
+    setMessages((prev) => [...prev, languageChangeMessage])
+  }
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    scrollToBottom()
+  }, [messages])
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        chatRef.current &&
-        !chatRef.current.contains(event.target) &&
-        isOpen
-      ) {
-        setIsOpen(false);
+      if (chatRef.current && !chatRef.current.contains(event.target) && isOpen) {
+        setIsOpen(false)
       }
       // Close language dropdown when clicking outside
-      if (
-        showLanguageDropdown &&
-        chatRef.current &&
-        !chatRef.current.contains(event.target)
-      ) {
-        setShowLanguageDropdown(false);
+      if (showLanguageDropdown && chatRef.current && !chatRef.current.contains(event.target)) {
+        setShowLanguageDropdown(false)
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen, showLanguageDropdown]);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isOpen, showLanguageDropdown])
 
   const handleSendMessage = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (userInput.trim() === "" || !selectedLanguage) return;
+    if (userInput.trim() === "" || !selectedLanguage) return
 
     const userMessage = {
       id: messages.length + 1,
       text: userInput,
       isBot: false,
-    };
+    }
 
-    setMessages((prev) => [...prev, userMessage]);
-    setuserInput("");
-    setIsTyping(true);
+    setMessages((prev) => [...prev, userMessage])
+    setuserInput("")
+    setIsTyping(true)
 
     try {
-      const botReply = await AskBot({ userInput, language: selectedLanguage });
+      const botReply = await AskBot({ userInput, language: selectedLanguage })
 
       const botResponse = {
         id: messages.length + 2,
         text: botReply || languages[selectedLanguage].response, // fallback
         isBot: true,
-      };
+      }
 
-      setMessages((prev) => [...prev, botResponse]);
+      setMessages((prev) => [...prev, botResponse])
     } catch (err) {
       const errorResponse = {
         id: messages.length + 2,
         text: "Sorry, something went wrong. Please try again later.",
         isBot: true,
-      };
-      setMessages((prev) => [...prev, errorResponse]);
+      }
+      setMessages((prev) => [...prev, errorResponse])
     } finally {
-      setIsTyping(false);
+      setIsTyping(false)
     }
-  };
+  }
 
   const resetChat = () => {
-    setSelectedLanguage(null);
-    setShowLanguageSelector(true);
-    setMessages([]);
-    setuserInput("");
-  };
+    setSelectedLanguage(null)
+    setShowLanguageSelector(true)
+    setMessages([])
+    setuserInput("")
+  }
 
   // Modern minimalist icons
   const icons = {
     ai: (
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <circle
-          cx="12"
-          cy="12"
-          r="3"
-          stroke="currentColor"
-          strokeWidth="2"
-          fill="none"
-        />
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" fill="none" />
         <path
           d="M12 1v6m0 8v6M4.22 4.22l4.24 4.24m7.07 7.07l4.24 4.24M1 12h6m8 0h6M4.22 19.78l4.24-4.24m7.07-7.07l4.24-4.24"
           stroke="currentColor"
@@ -180,13 +158,7 @@ const ChatBot = () => {
       </svg>
     ),
     close: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
           d="M18 6L6 18M6 6L18 18"
           stroke="currentColor"
@@ -197,13 +169,7 @@ const ChatBot = () => {
       </svg>
     ),
     send: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
           d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"
           stroke="currentColor"
@@ -214,13 +180,7 @@ const ChatBot = () => {
       </svg>
     ),
     brain: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
           d="M9.5 2A2.5 2.5 0 0 0 7 4.5v15A2.5 2.5 0 0 0 9.5 22h5a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 14.5 2h-5Z"
           stroke="currentColor"
@@ -231,13 +191,7 @@ const ChatBot = () => {
       </svg>
     ),
     reset: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
           d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"
           stroke="currentColor"
@@ -252,23 +206,11 @@ const ChatBot = () => {
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <path
-          d="M8 16H3v5"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <path d="M8 16H3v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
     language: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
         <path
           d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
@@ -277,7 +219,7 @@ const ChatBot = () => {
         />
       </svg>
     ),
-  };
+  }
 
   return (
     <>
@@ -297,9 +239,7 @@ const ChatBot = () => {
             : "0 10px 30px rgba(251, 191, 36, 0.3), 0 0 20px rgba(6, 182, 212, 0.2)",
         }}
       >
-        <div className="relative text-white group-hover:scale-110 transition-transform duration-300">
-          {icons.ai}
-        </div>
+        <div className="relative text-white group-hover:scale-110 transition-transform duration-300">{icons.ai}</div>
 
         {/* Animated background pattern */}
         <div className="absolute inset-0 rounded-full overflow-hidden">
@@ -323,13 +263,9 @@ const ChatBot = () => {
           isOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"
         }`}
         style={{
-          background: darkMode
-            ? "rgba(15, 15, 15, 0.95)"
-            : "rgba(255, 255, 255, 0.95)",
+          background: darkMode ? "rgba(15, 15, 15, 0.95)" : "rgba(255, 255, 255, 0.95)",
           backdropFilter: "blur(20px)",
-          border: darkMode
-            ? "1px solid rgba(245, 158, 11, 0.2)"
-            : "1px solid rgba(20, 184, 166, 0.2)",
+          border: darkMode ? "1px solid rgba(245, 158, 11, 0.2)" : "1px solid rgba(20, 184, 166, 0.2)",
           boxShadow: darkMode
             ? "0 25px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(245, 158, 11, 0.1)"
             : "0 25px 50px rgba(0, 0, 0, 0.15), 0 0 30px rgba(20, 184, 166, 0.1)",
@@ -363,9 +299,7 @@ const ChatBot = () => {
               <h3 className="font-bold text-white text-lg">Aivinci AI</h3>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-lime-300 rounded-full animate-pulse"></div>
-                <p className="text-xs text-white/90 font-medium">
-                  Online • Smart Assistant
-                </p>
+                <p className="text-xs text-white/90 font-medium">Online • Smart Assistant</p>
               </div>
             </div>
           </div>
@@ -385,15 +319,9 @@ const ChatBot = () => {
                   <div
                     className="absolute top-10 right-0 rounded-xl backdrop-blur-sm z-50 overflow-hidden transform transition-all duration-200"
                     style={{
-                      background: darkMode
-                        ? "rgba(20, 20, 20, 0.95)"
-                        : "rgba(255, 255, 255, 0.95)",
-                      border: darkMode
-                        ? "1px solid rgba(255, 255, 255, 0.1)"
-                        : "1px solid rgba(0, 0, 0, 0.1)",
-                      boxShadow: darkMode
-                        ? "0 8px 25px rgba(0, 0, 0, 0.4)"
-                        : "0 8px 25px rgba(0, 0, 0, 0.15)",
+                      background: darkMode ? "rgba(20, 20, 20, 0.95)" : "rgba(255, 255, 255, 0.95)",
+                      border: darkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
+                      boxShadow: darkMode ? "0 8px 25px rgba(0, 0, 0, 0.4)" : "0 8px 25px rgba(0, 0, 0, 0.15)",
                     }}
                   >
                     <div className="p-1 flex space-x-1">
@@ -444,20 +372,10 @@ const ChatBot = () => {
           <div className="p-6 text-center">
             <div className="mb-10">
               <div className="mt-6"></div>
-              <h3
-                className={`text-xl font-bold mb-2 ${
-                  darkMode ? "text-white" : "text-dark"
-                }`}
-              >
+              <h3 className={`text-xl font-bold mb-2 ${darkMode ? "text-white" : "text-dark"}`}>
                 Choose Your Language
               </h3>
-              <p
-                className={`text-sm ${
-                  darkMode ? "text-gray-300" : "text-dark"
-                }`}
-              >
-                Dilinizi seçin / Выберите язык
-              </p>
+              <p className={`text-sm ${darkMode ? "text-gray-300" : "text-dark"}`}>Dilinizi seçin / Выберите язык</p>
             </div>
 
             <div className="space-y-3">
@@ -471,22 +389,14 @@ const ChatBot = () => {
                       : "border-gray-200 hover:border-teal-400 bg-gray-50 hover:bg-teal-50"
                   }`}
                   style={{
-                    background: darkMode
-                      ? "rgba(40, 40, 40, 0.5)"
-                      : "rgba(249, 250, 251, 0.8)",
+                    background: darkMode ? "rgba(40, 40, 40, 0.5)" : "rgba(249, 250, 251, 0.8)",
                   }}
                 >
                   <div className="flex items-center justify-center space-x-3">
                     <span className="text-2xl group-hover:scale-110 transition-transform duration-300">
                       {lang.flag}
                     </span>
-                    <span
-                      className={`font-medium ${
-                        darkMode ? "text-white" : "text-dark"
-                      }`}
-                    >
-                      {lang.name}
-                    </span>
+                    <span className={`font-medium ${darkMode ? "text-white" : "text-dark"}`}>{lang.name}</span>
                   </div>
                 </button>
               ))}
@@ -500,38 +410,24 @@ const ChatBot = () => {
             <div
               className="h-80 overflow-y-auto p-5 flex flex-col space-y-4"
               style={{
-                background: darkMode
-                  ? "rgba(11, 11, 11, 0.3)"
-                  : "rgba(249, 250, 251, 0.5)",
+                background: darkMode ? "rgba(11, 11, 11, 0.3)" : "rgba(249, 250, 251, 0.5)",
               }}
             >
               {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    message.isBot ? "justify-start" : "justify-end"
-                  }`}
-                >
+                <div key={message.id} className={`flex ${message.isBot ? "justify-start" : "justify-end"}`}>
                   <div
                     className={`max-w-[85%] p-4 rounded-2xl backdrop-blur-sm ${
                       message.isBot
                         ? `${
-                            darkMode
-                              ? "bg-[rgb(36,36,36)]/50 text-white"
-                              : "bg-white/70 text-[rgb(36,36,36)]"
-                          } border ${
-                            darkMode
-                              ? "border-[rgb(68,68,68)]/50"
-                              : "border-gray-200/50"
-                          }`
+                            darkMode ? "bg-[rgb(36,36,36)]/50 text-white" : "bg-white/70 text-[rgb(36,36,36)]"
+                          } border ${darkMode ? "border-[rgb(68,68,68)]/50" : "border-gray-200/50"}`
                         : "text-white"
                     }`}
                     style={{
                       ...(message.isBot
                         ? {}
                         : {
-                            background:
-                              "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
+                            background: "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
                             boxShadow: "0 4px 15px rgba(245, 158, 11, 0.3)",
                           }),
                       animation: "slideIn 0.4s ease-out forwards",
@@ -542,20 +438,15 @@ const ChatBot = () => {
                         <div
                           className="w-4 h-4 rounded-full flex items-center justify-center"
                           style={{
-                            background:
-                              "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
+                            background: "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
                           }}
                         >
                           <div className="w-2 h-2 bg-white rounded-full"></div>
                         </div>
-                        <span className="text-xs font-medium opacity-70">
-                          AI Assistant
-                        </span>
+                        <span className="text-xs font-medium opacity-70">AI Assistant</span>
                       </div>
                     )}
-                    <p className="text-sm leading-relaxed whitespace-pre-line">
-                      {message.text.replace(/\\n/g, "\n")}
-                    </p>
+                    <p className="text-sm leading-relaxed whitespace-pre-line">{message.text.replace(/\\n/g, "\n")}</p>
                   </div>
                 </div>
               ))}
@@ -565,25 +456,18 @@ const ChatBot = () => {
                   <div
                     className={`max-w-[85%] p-4 rounded-2xl ${
                       darkMode ? "bg-[rgb(36,36,36)]/50" : "bg-white/70"
-                    } border ${
-                      darkMode
-                        ? "border-[rgb(68,68,68)]/50"
-                        : "border-gray-200/50"
-                    }`}
+                    } border ${darkMode ? "border-[rgb(68,68,68)]/50" : "border-gray-200/50"}`}
                   >
                     <div className="flex items-center space-x-2 mb-2">
                       <div
                         className="w-4 h-4 rounded-full flex items-center justify-center"
                         style={{
-                          background:
-                            "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
+                          background: "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
                         }}
                       >
                         <div className="w-2 h-2 bg-white rounded-full"></div>
                       </div>
-                      <span className="text-xs font-medium opacity-70">
-                        AI Assistant
-                      </span>
+                      <span className="text-xs font-medium opacity-70">AI Assistant</span>
                     </div>
                     <div className="flex space-x-1">
                       <div
@@ -610,12 +494,8 @@ const ChatBot = () => {
             <div
               className="p-4 border-t backdrop-blur-sm rounded-b-3xl"
               style={{
-                borderColor: darkMode
-                  ? "rgba(245, 158, 11, 0.2)"
-                  : "rgba(20, 184, 166, 0.2)",
-                background: darkMode
-                  ? "rgba(25, 25, 25, 0.5)"
-                  : "rgba(255, 255, 255, 0.5)",
+                borderColor: darkMode ? "rgba(245, 158, 11, 0.2)" : "rgba(20, 184, 166, 0.2)",
+                background: darkMode ? "rgba(25, 25, 25, 0.5)" : "rgba(255, 255, 255, 0.5)",
               }}
             >
               <form onSubmit={handleSendMessage} className="relative">
@@ -623,11 +503,7 @@ const ChatBot = () => {
                   type="text"
                   value={userInput}
                   onChange={(e) => setuserInput(e.target.value)}
-                  placeholder={
-                    selectedLanguage
-                      ? languages[selectedLanguage].placeholder
-                      : "Type your message..."
-                  }
+                  placeholder={selectedLanguage ? languages[selectedLanguage].placeholder : "Type your message..."}
                   className={`w-full py-3 px-4 pr-12 rounded-2xl border-2 transition-all duration-300 focus:outline-none backdrop-blur-sm ${
                     darkMode
                       ? "bg-[rgb(36,36,36)]/50 border-[rgb(68,68,68)] focus:border-amber-400 text-white placeholder-[rgb(148,148,148)]"
@@ -643,8 +519,7 @@ const ChatBot = () => {
                   disabled={!userInput.trim()}
                   className="absolute right-2 top-2 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-white hover:scale-110"
                   style={{
-                    background:
-                      "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
+                    background: "linear-gradient(135deg, #f59e0b 0%, #14b8a6 100%)",
                     boxShadow: "0 4px 15px rgba(245, 158, 11, 0.3)",
                   }}
                 >
@@ -669,7 +544,7 @@ const ChatBot = () => {
         }
       `}</style>
     </>
-  );
-};
+  )
+}
 
-export default ChatBot;
+export default ChatBot

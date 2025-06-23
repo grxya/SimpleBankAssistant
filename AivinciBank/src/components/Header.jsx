@@ -633,7 +633,8 @@ const Header = ({ customerType, setCustomerType }) => {
                     ) : (
                       <>
                         <Link
-                          to="/user"
+                          //to={user.role == "USER" ? "/user" : (user.role == "ADMIN" ? "/admin" : "/404")}
+                          to={`/${user.role.toLowerCase()}`}
                           className="flex items-center px-4 py-3 hover:bg-secondary/5 transition-colors rounded-md m-1"
                         >
                           <div>
